@@ -6,7 +6,6 @@
   <title>Estadísticas</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
@@ -17,7 +16,6 @@
     <h2 class="mb-1">Estadísticas</h2>
     <p class="text-secondary mb-3">Resumen de registros del campamento</p>
 
-    <!-- ✅ FILTRO POR AÑO -->
     <div class="mb-4">
       <select id="filtroAnio" class="form-select bg-secondary text-light border-0" style="max-width: 200px;">
         <option value="">Todos los años</option>
@@ -29,6 +27,8 @@
 
     <a href="consulta.html" class="btn btn-outline-light mt-4">← Volver</a>
   </div>
+
+  <script src="footer.js"></script>
 
   <script>
     let todosLosDatos = [];
@@ -44,11 +44,9 @@
           return;
         }
 
-        // Guardar todos los datos
         todosLosDatos = [];
         snapshot.forEach(doc => todosLosDatos.push(doc.data()));
 
-        // Cargar años disponibles
         const años = [...new Set(todosLosDatos.map(d => d.Año).filter(Boolean))].sort((a, b) => b - a);
         const select = document.getElementById("filtroAnio");
         años.forEach(anio => {
@@ -58,12 +56,10 @@
           select.appendChild(opt);
         });
 
-        // Preseleccionar año actual si existe
         const anioActual = new Date().getFullYear();
         if (años.includes(anioActual)) select.value = anioActual;
 
         mostrarEstadisticas(select.value);
-
         select.addEventListener("change", () => mostrarEstadisticas(select.value));
 
       }).catch(err => {
@@ -85,21 +81,17 @@
       datos.forEach(d => {
         const edad = d.Edad ?? "Sin edad";
         conteoEdad[edad] = (conteoEdad[edad] || 0) + 1;
-
         if (d.Tanda === "Primera") conteoTanda.Primera++;
         else if (d.Tanda === "Segunda") conteoTanda.Segunda++;
-
         if (d["Tiene brazalete"] === "Sí") conteoBrazalete.Sí++;
         else conteoBrazalete.No++;
       });
 
       const edadesOrdenadas = Object.keys(conteoEdad).sort((a, b) => Number(a) - Number(b));
-
       const titulo = anioFiltro ? `Campamento ${anioFiltro}` : "Todos los campamentos";
 
       document.getElementById("reporte").innerHTML = `
         <h5 class="text-info mb-3">${titulo}</h5>
-
         <div class="row g-3 mb-4">
           <div class="col-md-4">
             <div class="card bg-secondary text-white text-center p-3">
@@ -120,7 +112,6 @@
             </div>
           </div>
         </div>
-
         <h5>Distribución por Edad</h5>
         <ul class="list-group mb-4">
           ${edadesOrdenadas.map(edad => `
@@ -130,16 +121,13 @@
             </li>
           `).join("")}
         </ul>
-
         <h5>Brazalete</h5>
         <ul class="list-group">
           <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center">
-            Con brazalete
-            <span class="badge bg-success">${conteoBrazalete.Sí}</span>
+            Con brazalete <span class="badge bg-success">${conteoBrazalete.Sí}</span>
           </li>
           <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center">
-            Sin brazalete
-            <span class="badge bg-secondary">${conteoBrazalete.No}</span>
+            Sin brazalete <span class="badge bg-secondary">${conteoBrazalete.No}</span>
           </li>
         </ul>
       `;
