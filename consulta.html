@@ -14,7 +14,7 @@
 </head>
 <body class="bg-dark text-light p-4">
   <div class="container">
-    <!-- Contenido protegido -->
+
     <div id="contenidoProtegido" style="display: none;">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -24,18 +24,25 @@
         <button class="btn btn-outline-danger btn-sm" onclick="cerrarSesion()">Cerrar sesión</button>
       </div>
 
+      <!-- Filtros -->
       <div class="row mb-3 g-2">
-        <div class="col-md-6">
+        <div class="col-md-4">
           <input type="text" id="busqueda" class="form-control bg-secondary text-light border-0" placeholder="Buscar por nombre o apellido">
         </div>
-        <div class="col-md-3">
-          <input type="number" id="busquedaEdad" class="form-control bg-secondary text-light border-0" placeholder="Filtrar por edad">
+        <div class="col-md-2">
+          <input type="number" id="busquedaEdad" class="form-control bg-secondary text-light border-0" placeholder="Edad">
         </div>
         <div class="col-md-3">
           <select id="busquedaTanda" class="form-select bg-secondary text-light border-0">
             <option value="">Todas las tandas</option>
             <option value="Primera">Primera</option>
             <option value="Segunda">Segunda</option>
+          </select>
+        </div>
+        <!-- ✅ FILTRO POR AÑO -->
+        <div class="col-md-3">
+          <select id="busquedaAnio" class="form-select bg-secondary text-light border-0">
+            <option value="">Todos los años</option>
           </select>
         </div>
       </div>
@@ -50,6 +57,7 @@
               <th>Responsable</th>
               <th>Tanda</th>
               <th>Brazalete</th>
+              <th>Año</th>
               <th>Registrado por</th>
               <th>Acciones</th>
             </tr>
@@ -74,7 +82,6 @@
       </div>
     </div>
 
-    <!-- Sin sesión -->
     <div id="contenidoRestringido" style="display: none;">
       <div class="alert alert-danger mt-4">Contenido protegido. Debes iniciar sesión.</div>
       <a href="login.html" class="btn btn-primary">Ir al Login</a>
@@ -103,16 +110,13 @@
     }
 
     auth.onAuthStateChanged(function(user) {
-      const protegido = document.getElementById("contenidoProtegido");
-      const restringido = document.getElementById("contenidoRestringido");
-
       if (user) {
-        protegido.style.display = "block";
-        restringido.style.display = "none";
+        document.getElementById("contenidoProtegido").style.display = "block";
+        document.getElementById("contenidoRestringido").style.display = "none";
         iniciarTabla();
       } else {
-        protegido.style.display = "none";
-        restringido.style.display = "block";
+        document.getElementById("contenidoProtegido").style.display = "none";
+        document.getElementById("contenidoRestringido").style.display = "block";
       }
     });
 
@@ -120,15 +124,40 @@
       const inputNombre = document.getElementById("busqueda");
       const inputEdad = document.getElementById("busquedaEdad");
       const inputTanda = document.getElementById("busquedaTanda");
+      const inputAnio = document.getElementById("busquedaAnio");
+
+      // Cargar años disponibles dinámicamente
+      db.collection("niños").get().then(snapshot => {
+        const años = new Set();
+        snapshot.forEach(doc => {
+          const a = doc.data().Año;
+          if (a) años.add(a);
+        });
+
+        const select = document.getElementById("busquedaAnio");
+        [...años].sort((a, b) => b - a).forEach(anio => {
+          const opt = document.createElement("option");
+          opt.value = anio;
+          opt.textContent = anio;
+          select.appendChild(opt);
+        });
+
+        // Preseleccionar año actual
+        const anioActual = new Date().getFullYear();
+        if (años.has(anioActual)) select.value = anioActual;
+
+        cargar();
+      });
 
       const cargar = () => {
         const texto = inputNombre.value.toLowerCase().trim();
         const edadFiltro = inputEdad.value.trim();
         const tandaFiltro = inputTanda.value;
+        const anioFiltro = inputAnio.value;
         const tabla = document.getElementById("contenidoTabla");
         const totalEl = document.getElementById("totalRegistros");
 
-        tabla.innerHTML = "<tr><td colspan='8' class='text-center'>Cargando...</td></tr>";
+        tabla.innerHTML = "<tr><td colspan='9' class='text-center'>Cargando...</td></tr>";
 
         db.collection("niños").get().then(snapshot => {
           tabla.innerHTML = "";
@@ -140,8 +169,9 @@
             const coincideNombre = !texto || nombreCompleto.includes(texto);
             const coincideEdad = !edadFiltro || d.Edad == edadFiltro;
             const coincideTanda = !tandaFiltro || d.Tanda === tandaFiltro;
+            const coincideAnio = !anioFiltro || String(d.Año) === anioFiltro;
 
-            if (coincideNombre && coincideEdad && coincideTanda) {
+            if (coincideNombre && coincideEdad && coincideTanda && coincideAnio) {
               count++;
               const fila = document.createElement("tr");
               fila.innerHTML = `
@@ -155,6 +185,7 @@
                     ${d["Tiene brazalete"] || "-"}
                   </span>
                 </td>
+                <td><span class="badge bg-info text-dark">${d.Año || "-"}</span></td>
                 <td><small class="text-secondary">${d.registradoPor || "-"}</small></td>
                 <td>
                   <button class="btn btn-sm btn-warning me-1" onclick="editarRegistro('${doc.id}')">Editar</button>
@@ -166,7 +197,7 @@
           });
 
           if (count === 0) {
-            tabla.innerHTML = "<tr><td colspan='8' class='text-center text-secondary'>No se encontraron registros.</td></tr>";
+            tabla.innerHTML = "<tr><td colspan='9' class='text-center text-secondary'>No se encontraron registros.</td></tr>";
           }
           totalEl.textContent = `${count} registro(s) mostrado(s)`;
         });
@@ -175,15 +206,13 @@
       inputNombre.addEventListener("input", cargar);
       inputEdad.addEventListener("input", cargar);
       inputTanda.addEventListener("change", cargar);
-      cargar();
+      inputAnio.addEventListener("change", cargar);
     }
 
     function eliminarRegistro(id) {
       if (confirm("¿Seguro que quieres eliminar este registro?")) {
         db.collection("niños").doc(id).delete()
-          .then(() => {
-            iniciarTabla();
-          })
+          .then(() => iniciarTabla())
           .catch(err => alert("No se pudo eliminar: " + err.message));
       }
     }
