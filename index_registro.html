@@ -11,12 +11,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="firebase-init.js"></script>
-  <!-- funciones-personalizadas.js NO se carga aquí para evitar doble protección de ruta -->
 </head>
 <body class="bg-dark text-light p-4">
   <div class="container" style="max-width: 700px;">
     <h2 class="mb-1">Registro de Niños</h2>
-    <p class="text-secondary mb-4">Campamento EBDV</p>
+    <p class="text-secondary mb-4">Campamento EBDV — <span id="anioActual"></span></p>
 
     <form id="formulario" class="row g-3">
       <div class="col-md-6">
@@ -62,21 +61,20 @@
   </div>
 
   <script>
-    // Protección de ruta manual (sin funciones-personalizadas.js para evitar conflicto)
+    // Mostrar año actual en el subtítulo
+    const anioActual = new Date().getFullYear();
+    document.getElementById("anioActual").textContent = "Año " + anioActual;
+
+    // Protección de ruta
     auth.onAuthStateChanged(function(user) {
-      if (!user) {
-        window.location.href = "login.html";
-      }
+      if (!user) window.location.href = "login.html";
     });
 
     document.getElementById("formulario").addEventListener("submit", async function(e) {
       e.preventDefault();
 
       const user = auth.currentUser;
-      if (!user) {
-        window.location.href = "login.html";
-        return;
-      }
+      if (!user) { window.location.href = "login.html"; return; }
 
       const btn = document.getElementById("btnRegistrar");
       const exito = document.getElementById("mensajeExito");
@@ -94,13 +92,15 @@
         "Quién lo trajo": document.getElementById("responsable").value.trim(),
         Tanda: document.getElementById("tanda").value,
         "Tiene brazalete": document.getElementById("brazalete").value,
+        // ✅ AÑO AUTOMÁTICO — no requiere intervención del usuario
+        Año: new Date().getFullYear(),
         registradoPor: user.email,
         fechaRegistro: firebase.firestore.Timestamp.now()
       };
 
       try {
         await db.collection("niños").add(nuevoRegistro);
-        exito.textContent = `✓ ${nuevoRegistro.Nombre} ${nuevoRegistro.Apellido} registrado correctamente.`;
+        exito.textContent = `✓ ${nuevoRegistro.Nombre} ${nuevoRegistro.Apellido} registrado correctamente (${nuevoRegistro.Año}).`;
         exito.style.display = "block";
         e.target.reset();
       } catch (err) {
