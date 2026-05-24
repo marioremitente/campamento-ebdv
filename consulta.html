@@ -6,7 +6,6 @@
   <title>Consulta de Registros</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
@@ -39,10 +38,9 @@
             <option value="Segunda">Segunda</option>
           </select>
         </div>
-        <!-- ✅ FILTRO POR AÑO -->
         <div class="col-md-3">
           <select id="busquedaAnio" class="form-select bg-secondary text-light border-0">
-            <option value="">Todos los años</option>
+            <option value="">Seleccionar año</option>
           </select>
         </div>
       </div>
@@ -62,7 +60,13 @@
               <th>Acciones</th>
             </tr>
           </thead>
-          <tbody id="contenidoTabla"></tbody>
+          <tbody id="contenidoTabla">
+            <tr>
+              <td colspan="9" class="text-center text-secondary py-4">
+                Selecciona un año, tanda o escribe un nombre para ver los registros.
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
 
@@ -87,6 +91,8 @@
       <a href="login.html" class="btn btn-primary">Ir al Login</a>
     </div>
   </div>
+
+  <script src="footer.js"></script>
 
   <script>
     function cerrarSesion() {
@@ -120,13 +126,21 @@
       }
     });
 
+    function hayFiltroActivo() {
+      const texto = document.getElementById("busqueda").value.trim();
+      const edad = document.getElementById("busquedaEdad").value.trim();
+      const tanda = document.getElementById("busquedaTanda").value;
+      const anio = document.getElementById("busquedaAnio").value;
+      return texto !== "" || edad !== "" || tanda !== "" || anio !== "";
+    }
+
     function iniciarTabla() {
       const inputNombre = document.getElementById("busqueda");
       const inputEdad = document.getElementById("busquedaEdad");
       const inputTanda = document.getElementById("busquedaTanda");
       const inputAnio = document.getElementById("busquedaAnio");
 
-      // Cargar años disponibles dinámicamente
+      // Cargar años disponibles
       db.collection("niños").get().then(snapshot => {
         const años = new Set();
         snapshot.forEach(doc => {
@@ -141,21 +155,28 @@
           opt.textContent = anio;
           select.appendChild(opt);
         });
-
-        // Preseleccionar año actual
-        const anioActual = new Date().getFullYear();
-        if (años.has(anioActual)) select.value = anioActual;
-
-        cargar();
       });
 
       const cargar = () => {
-        const texto = inputNombre.value.toLowerCase().trim();
-        const edadFiltro = inputEdad.value.trim();
-        const tandaFiltro = inputTanda.value;
-        const anioFiltro = inputAnio.value;
         const tabla = document.getElementById("contenidoTabla");
         const totalEl = document.getElementById("totalRegistros");
+
+        // Si no hay ningún filtro activo, mostrar mensaje y no consultar
+        if (!hayFiltroActivo()) {
+          tabla.innerHTML = `
+            <tr>
+              <td colspan="9" class="text-center text-secondary py-4">
+                Selecciona un año, tanda o escribe un nombre para ver los registros.
+              </td>
+            </tr>`;
+          totalEl.textContent = "";
+          return;
+        }
+
+        const texto = document.getElementById("busqueda").value.toLowerCase().trim();
+        const edadFiltro = document.getElementById("busquedaEdad").value.trim();
+        const tandaFiltro = document.getElementById("busquedaTanda").value;
+        const anioFiltro = document.getElementById("busquedaAnio").value;
 
         tabla.innerHTML = "<tr><td colspan='9' class='text-center'>Cargando...</td></tr>";
 
@@ -197,9 +218,9 @@
           });
 
           if (count === 0) {
-            tabla.innerHTML = "<tr><td colspan='9' class='text-center text-secondary'>No se encontraron registros.</td></tr>";
+            tabla.innerHTML = "<tr><td colspan='9' class='text-center text-secondary'>No se encontraron registros con esos filtros.</td></tr>";
           }
-          totalEl.textContent = `${count} registro(s) mostrado(s)`;
+          totalEl.textContent = `${count} registro(s) encontrado(s)`;
         });
       };
 
