@@ -1,152 +1,525 @@
+```html id="3u5c0n"
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
   <title>Estadisticas</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet">
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script src="firebase-init.js"></script>
-</head>
-<body class="bg-dark text-light p-4">
-  <div class="container" style="max-width: 700px;">
-    <h2 class="mb-1">Estadisticas</h2>
-    <p class="text-secondary mb-3">Resumen de registros del campamento</p>
 
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <script src="firebase-init.js"></script>
+
+</head>
+
+<body class="bg-dark text-light p-4">
+
+  <div
+    class="container"
+    style="max-width:700px;">
+
+    <!-- TITULO -->
+    <h2 class="mb-1">
+      Estadisticas
+    </h2>
+
+    <p class="text-secondary mb-3">
+      Resumen general del campamento
+    </p>
+
+    <!-- FILTRO -->
     <div class="mb-4">
-      <select id="filtroAnio" class="form-select bg-secondary text-light border-0" style="max-width: 200px;">
-        <option value="">Todos los anios</option>
+
+      <select
+        id="filtroAnio"
+        class="form-select bg-secondary text-light border-0"
+        style="max-width:200px;">
+
+        <option value="">
+          Todos los anios
+        </option>
+
       </select>
+
     </div>
 
-    <div id="cargando" class="text-secondary">Cargando estadisticas...</div>
+    <!-- CARGANDO -->
+    <div
+      id="cargando"
+      class="text-secondary">
+
+      Cargando estadisticas...
+
+    </div>
+
+    <!-- REPORTE -->
     <div id="reporte" class="mt-3"></div>
 
-    <a href="consulta.html" class="btn btn-outline-light mt-4">&#8592; Volver</a>
+    <!-- VOLVER -->
+    <a
+      href="consulta.html"
+      class="btn btn-outline-light mt-4">
+
+      ← Volver
+
+    </a>
+
   </div>
 
   <script src="footer.js"></script>
 
   <script>
+
+    // =========================
+    // VARIABLES
+    // =========================
     let todosLosDatos = [];
 
+    // =========================
+    // LOGIN
+    // =========================
     auth.onAuthStateChanged(function(user) {
-      if (!user) { window.location.href = "login.html"; return; }
 
-      db.collection("ninos").get().then(function(snapshot) {
-        document.getElementById("cargando").style.display = "none";
+      if (!user) {
 
-        if (snapshot.empty) {
-          document.getElementById("reporte").innerHTML = "<p class='text-secondary'>No hay registros todavia.</p>";
-          return;
-        }
+        window.location.href =
+          "login.html";
 
-        todosLosDatos = [];
-        snapshot.forEach(function(doc) { todosLosDatos.push(doc.data()); });
+        return;
+      }
 
-        // Obtener anios unicos, evitar undefined/null
-        var anios = [];
-        todosLosDatos.forEach(function(d) {
-          var a = d.anio;
-          if (a && !anios.includes(a)) anios.push(a);
+      // =========================
+      // LEER FIRESTORE
+      // =========================
+      db.collection("ninos")
+
+        .get()
+
+        .then(function(snapshot) {
+
+          document.getElementById(
+            "cargando"
+          ).style.display = "none";
+
+          // VACIO
+          if (snapshot.empty) {
+
+            document.getElementById(
+              "reporte"
+            ).innerHTML =
+
+              "<p class='text-secondary'>" +
+
+                "No hay registros todavia." +
+
+              "</p>";
+
+            return;
+          }
+
+          // =========================
+          // GUARDAR DATOS
+          // =========================
+          todosLosDatos = [];
+
+          snapshot.forEach(function(doc) {
+
+            todosLosDatos.push(
+              doc.data()
+            );
+
+          });
+
+          // =========================
+          // ANIOS UNICOS
+          // =========================
+          var anios = [];
+
+          todosLosDatos.forEach(function(d) {
+
+            var a = d.anio;
+
+            if (
+              a &&
+              !anios.includes(a)
+            ) {
+              anios.push(a);
+            }
+
+          });
+
+          anios.sort(function(a, b) {
+
+            return b - a;
+
+          });
+
+          var select =
+            document.getElementById(
+              "filtroAnio"
+            );
+
+          anios.forEach(function(anio) {
+
+            var opt =
+              document.createElement(
+                "option"
+              );
+
+            opt.value =
+              anio;
+
+            opt.textContent =
+              anio;
+
+            select.appendChild(opt);
+
+          });
+
+          // =========================
+          // AUTOSELECCIONAR ANIO
+          // =========================
+          var anioActual =
+            new Date().getFullYear();
+
+          if (
+            anios.includes(anioActual)
+          ) {
+            select.value =
+              anioActual;
+          }
+
+          mostrarEstadisticas(
+            select.value
+          );
+
+          select.addEventListener(
+            "change",
+
+            function() {
+
+              mostrarEstadisticas(
+                select.value
+              );
+
+            }
+          );
+
+        })
+
+        .catch(function(err) {
+
+          console.error(err);
+
+          document.getElementById(
+            "cargando"
+          ).textContent =
+
+            "Error al cargar estadisticas.";
+
         });
-        anios.sort(function(a, b) { return b - a; });
 
-        var select = document.getElementById("filtroAnio");
-        anios.forEach(function(anio) {
-          var opt = document.createElement("option");
-          opt.value = anio;
-          opt.textContent = anio;
-          select.appendChild(opt);
-        });
-
-        var anioActual = new Date().getFullYear();
-        if (anios.includes(anioActual)) select.value = anioActual;
-
-        mostrarEstadisticas(select.value);
-        select.addEventListener("change", function() { mostrarEstadisticas(select.value); });
-
-      }).catch(function(err) {
-        document.getElementById("cargando").textContent = "Error al cargar estadisticas.";
-        console.error(err);
-      });
     });
 
+    // =========================
+    // MOSTRAR ESTADISTICAS
+    // =========================
     function mostrarEstadisticas(anioFiltro) {
-      var datos = anioFiltro
-        ? todosLosDatos.filter(function(d) { return String(d.anio) === String(anioFiltro); })
-        : todosLosDatos;
 
+      // FILTRAR
+      var datos =
+
+        anioFiltro
+
+        ?
+
+        todosLosDatos.filter(function(d) {
+
+          return String(d.anio)
+            ===
+            String(anioFiltro);
+
+        })
+
+        :
+
+        todosLosDatos;
+
+      // =========================
+      // CONTADORES
+      // =========================
       var conteoEdad = {};
-      var conteoTanda = { primera: 0, segunda: 0 };
-      var conteoBrazalete = { si: 0, no: 0 };
-      var total = datos.length;
 
+      var conteoTanda = {
+
+        primera: 0,
+
+        segunda: 0
+      };
+
+      var conteoBrazalete = {
+
+        si: 0,
+
+        no: 0
+      };
+
+      var total =
+        datos.length;
+
+      // =========================
+      // RECORRER DATOS
+      // =========================
       datos.forEach(function(d) {
-        // Conteo por edad
-        var edad = (d.edad !== undefined && d.edad !== null) ? d.edad : "Sin edad";
-        conteoEdad[edad] = (conteoEdad[edad] || 0) + 1;
 
-        // Conteo por tanda (normalizado a minusculas)
-        var tanda = d.tanda ? d.tanda.toLowerCase() : "";
-        if (tanda === "primera") conteoTanda.primera++;
-        else if (tanda === "segunda") conteoTanda.segunda++;
+        // =====================
+        // EDAD
+        // =====================
+        var edad =
 
-        // Conteo por brazalete (normalizado a minusculas)
-        var brazalete = d.tieneBrazalete ? d.tieneBrazalete.toLowerCase() : "no";
-        if (brazalete === "si") conteoBrazalete.si++;
-        else conteoBrazalete.no++;
+          (
+            d.edad !== undefined &&
+            d.edad !== null
+          )
+
+          ?
+
+          d.edad
+
+          :
+
+          "Sin edad";
+
+        conteoEdad[edad] =
+
+          (
+            conteoEdad[edad]
+            || 0
+          )
+
+          + 1;
+
+        // =====================
+        // TANDA
+        // =====================
+        var tanda =
+
+          d.tanda
+            ? d.tanda.toLowerCase()
+            : "";
+
+        if (tanda === "primera") {
+
+          conteoTanda.primera++;
+
+        }
+
+        else if (tanda === "segunda") {
+
+          conteoTanda.segunda++;
+
+        }
+
+        // =====================
+        // BRAZALETE
+        // =====================
+        if (d.tieneBrazalete === true) {
+
+          conteoBrazalete.si++;
+
+        }
+
+        else {
+
+          conteoBrazalete.no++;
+
+        }
+
       });
 
-      var edadesOrdenadas = Object.keys(conteoEdad).sort(function(a, b) { return Number(a) - Number(b); });
-      var titulo = anioFiltro ? "Campamento " + anioFiltro : "Todos los campamentos";
+      // =========================
+      // ORDENAR EDADES
+      // =========================
+      var edadesOrdenadas =
 
-      var filasEdad = edadesOrdenadas.map(function(edad) {
-        var etiqueta = edad === "Sin edad" ? "Sin edad registrada" : edad + " anio(s)";
-        return "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
-          etiqueta +
-          "<span class='badge bg-primary'>" + conteoEdad[edad] + "</span></li>";
-      }).join("");
+        Object.keys(conteoEdad)
 
-      document.getElementById("reporte").innerHTML =
-        "<h5 class='text-info mb-3'>" + titulo + "</h5>" +
+        .sort(function(a, b) {
+
+          return Number(a)
+            - Number(b);
+
+        });
+
+      var titulo =
+
+        anioFiltro
+
+        ?
+
+        "Campamento " + anioFiltro
+
+        :
+
+        "Todos los campamentos";
+
+      // =========================
+      // FILAS EDAD
+      // =========================
+      var filasEdad =
+
+        edadesOrdenadas.map(function(edad) {
+
+          var etiqueta =
+
+            edad === "Sin edad"
+
+            ?
+
+            "Sin edad registrada"
+
+            :
+
+            edad + " anio(s)";
+
+          return
+
+            "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
+
+              etiqueta +
+
+              "<span class='badge bg-primary'>" +
+
+                conteoEdad[edad] +
+
+              "</span>" +
+
+            "</li>";
+
+        }).join("");
+
+      // =========================
+      // HTML FINAL
+      // =========================
+      document.getElementById(
+        "reporte"
+      ).innerHTML =
+
+        "<h5 class='text-info mb-3'>" +
+
+          titulo +
+
+        "</h5>" +
+
         "<div class='row g-3 mb-4'>" +
+
           "<div class='col-md-4'>" +
+
             "<div class='card bg-secondary text-white text-center p-3'>" +
-              "<h1 class='mb-0'>" + total + "</h1>" +
+
+              "<h1 class='mb-0'>" +
+
+                total +
+
+              "</h1>" +
+
               "<small>Total de ninos</small>" +
+
             "</div>" +
+
           "</div>" +
+
           "<div class='col-md-4'>" +
+
             "<div class='card bg-secondary text-white text-center p-3'>" +
-              "<h1 class='mb-0'>" + conteoTanda.primera + "</h1>" +
+
+              "<h1 class='mb-0'>" +
+
+                conteoTanda.primera +
+
+              "</h1>" +
+
               "<small>Primera tanda</small>" +
+
             "</div>" +
+
           "</div>" +
+
           "<div class='col-md-4'>" +
+
             "<div class='card bg-secondary text-white text-center p-3'>" +
-              "<h1 class='mb-0'>" + conteoTanda.segunda + "</h1>" +
+
+              "<h1 class='mb-0'>" +
+
+                conteoTanda.segunda +
+
+              "</h1>" +
+
               "<small>Segunda tanda</small>" +
+
             "</div>" +
+
           "</div>" +
+
         "</div>" +
+
         "<h5>Distribucion por Edad</h5>" +
-        "<ul class='list-group mb-4'>" + filasEdad + "</ul>" +
+
+        "<ul class='list-group mb-4'>" +
+
+          filasEdad +
+
+        "</ul>" +
+
         "<h5>Brazalete</h5>" +
+
         "<ul class='list-group'>" +
+
           "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
-            "Con brazalete <span class='badge bg-success'>" + conteoBrazalete.si + "</span>" +
+
+            "Con brazalete" +
+
+            "<span class='badge bg-success'>" +
+
+              conteoBrazalete.si +
+
+            "</span>" +
+
           "</li>" +
+
           "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
-            "Sin brazalete <span class='badge bg-secondary'>" + conteoBrazalete.no + "</span>" +
+
+            "Sin brazalete" +
+
+            "<span class='badge bg-secondary'>" +
+
+              conteoBrazalete.no +
+
+            "</span>" +
+
           "</li>" +
+
         "</ul>";
+
     }
+
   </script>
 
-  
 </body>
 </html>
+```

@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -22,6 +21,7 @@
 
   <div class="container">
 
+    <!-- CONTENIDO PROTEGIDO -->
     <div id="contenidoProtegido" style="display:none;">
 
       <div class="d-flex justify-content-between align-items-center mb-4">
@@ -118,7 +118,6 @@
           <thead>
 
             <tr>
-
               <th>Nombre</th>
               <th>Apellido</th>
               <th>Edad</th>
@@ -128,7 +127,6 @@
               <th>Anio</th>
               <th>Registrado por</th>
               <th>Acciones</th>
-
             </tr>
 
           </thead>
@@ -263,7 +261,7 @@
 
             promesas.push(
 
-              db.collection("respaldoNinos")
+              db.collection("respaldo_ninos")
                 .add(
 
                   Object.assign(
@@ -407,6 +405,10 @@
             document.getElementById(
               "busquedaAnio"
             );
+
+          // evita duplicados
+          select.innerHTML =
+            "<option value=''>Seleccionar anio</option>";
 
           Array.from(aniosSet)
 
@@ -563,6 +565,9 @@
                 var fila =
                   document.createElement("tr");
 
+                var tieneBrazalete =
+                  d.tieneBrazalete === "si";
+
                 fila.innerHTML =
 
                   "<td>" +
@@ -600,7 +605,7 @@
                   "<span class='badge " +
 
                   (
-                    d.tieneBrazalete
+                    tieneBrazalete
                       ? "bg-success"
                       : "bg-secondary"
                   )
@@ -608,7 +613,7 @@
                   + "'>" +
 
                   (
-                    d.tieneBrazalete
+                    tieneBrazalete
                       ? "Si"
                       : "No"
                   )
@@ -669,6 +674,23 @@
 
               count +
               " registro(s) encontrado(s)";
+          })
+
+          .catch(function(error) {
+
+            console.error(error);
+
+            tabla.innerHTML =
+
+              "<tr>" +
+
+              "<td colspan='9' class='text-center text-danger'>" +
+
+              "Error cargando datos." +
+
+              "</td>" +
+
+              "</tr>";
           });
       }
 
@@ -743,4 +765,3 @@
 
 </body>
 </html>
-```

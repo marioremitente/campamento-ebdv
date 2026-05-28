@@ -1,162 +1,524 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
   <title>Editar Registro</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet">
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
   <script src="firebase-init.js"></script>
+
 </head>
+
 <body class="bg-dark text-light p-4">
-  <div class="container" style="max-width: 700px;">
-    <h2 class="mb-1">Editar Registro</h2>
-    <p class="text-secondary mb-4">Modifica los datos del nino registrado.</p>
 
-    <div id="cargando" class="text-secondary mb-3">Cargando datos...</div>
+  <div
+    class="container"
+    style="max-width:700px;">
 
-    <form id="formEditar" class="row g-3" style="display:none;">
+    <h2 class="mb-1">
+      Editar Registro
+    </h2>
+
+    <p class="text-secondary mb-4">
+      Modifica los datos del nino registrado.
+    </p>
+
+    <div
+      id="cargando"
+      class="text-secondary mb-3">
+
+      Cargando datos...
+
+    </div>
+
+    <!-- FORM -->
+    <form
+      id="formEditar"
+      class="row g-3"
+      style="display:none;">
+
       <div class="col-md-6">
-        <label class="form-label">Nombre</label>
-        <input type="text" id="nombre" class="form-control bg-secondary text-light border-0" required>
+
+        <label class="form-label">
+          Nombre
+        </label>
+
+        <input
+          type="text"
+          id="nombre"
+          class="form-control bg-secondary text-light border-0"
+          required>
+
       </div>
+
       <div class="col-md-6">
-        <label class="form-label">Apellido</label>
-        <input type="text" id="apellido" class="form-control bg-secondary text-light border-0" required>
+
+        <label class="form-label">
+          Apellido
+        </label>
+
+        <input
+          type="text"
+          id="apellido"
+          class="form-control bg-secondary text-light border-0"
+          required>
+
       </div>
+
       <div class="col-md-4">
-        <label class="form-label">Edad</label>
-        <input type="number" id="edad" class="form-control bg-secondary text-light border-0" min="1" max="18" required>
+
+        <label class="form-label">
+          Edad
+        </label>
+
+        <input
+          type="number"
+          id="edad"
+          min="1"
+          max="18"
+          class="form-control bg-secondary text-light border-0"
+          required>
+
       </div>
+
       <div class="col-md-8">
-        <label class="form-label">Quien lo trajo?</label>
-        <input type="text" id="responsable" class="form-control bg-secondary text-light border-0" required>
+
+        <label class="form-label">
+          Quien lo trajo
+        </label>
+
+        <input
+          type="text"
+          id="responsable"
+          class="form-control bg-secondary text-light border-0"
+          required>
+
       </div>
+
       <div class="col-md-6">
-        <label class="form-label">Tanda</label>
-        <select id="tanda" class="form-select bg-secondary text-light border-0" required>
-          <option value="">Seleccionar tanda</option>
-          <option value="Primera">Primera</option>
-          <option value="Segunda">Segunda</option>
+
+        <label class="form-label">
+          Tanda
+        </label>
+
+        <select
+          id="tanda"
+          class="form-select bg-secondary text-light border-0"
+          required>
+
+          <option value="">
+            Seleccionar tanda
+          </option>
+
+          <option value="primera">
+            Primera
+          </option>
+
+          <option value="segunda">
+            Segunda
+          </option>
+
         </select>
+
       </div>
+
       <div class="col-md-6">
-        <label class="form-label">Tiene brazalete?</label>
-        <select id="brazalete" class="form-select bg-secondary text-light border-0" required>
-          <option value="">Seleccionar</option>
-          <option value="Si">Si</option>
-          <option value="No">No</option>
+
+        <label class="form-label">
+          Tiene brazalete
+        </label>
+
+        <select
+          id="brazalete"
+          class="form-select bg-secondary text-light border-0"
+          required>
+
+          <option value="">
+            Seleccionar
+          </option>
+
+          <option value="si">
+            Si
+          </option>
+
+          <option value="no">
+            No
+          </option>
+
         </select>
+
       </div>
+
       <div class="col-12 d-flex gap-2">
-        <button class="btn btn-success" type="submit" id="btnGuardar">Guardar Cambios</button>
-        <a href="consulta.html" class="btn btn-outline-light">Cancelar</a>
+
+        <button
+          type="submit"
+          id="btnGuardar"
+          class="btn btn-success">
+
+          Guardar Cambios
+
+        </button>
+
+        <a
+          href="consulta.html"
+          class="btn btn-outline-light">
+
+          Cancelar
+
+        </a>
+
       </div>
+
     </form>
 
-    <div id="mensajeError" class="alert alert-danger mt-3" style="display:none;"></div>
+    <div
+      id="mensajeError"
+      class="alert alert-danger mt-3"
+      style="display:none;">
+
+    </div>
+
   </div>
 
-  <script src="footer.js"></script>
-
   <script>
-    var id = localStorage.getItem("registroEditarId");
+
+    var id =
+      localStorage.getItem(
+        "registroEditarId"
+      );
+
     var datosOriginales = {};
 
+    // =========================
+    // LOGIN
+    // =========================
     auth.onAuthStateChanged(function(user) {
-      if (!user) { window.location.href = "login.html"; return; }
-      if (!id) { alert("No se encontro el ID del registro."); window.location.href = "consulta.html"; return; }
 
-      db.collection("ninos").doc(id).get().then(function(doc) {
-        if (!doc.exists) { alert("Registro no encontrado."); window.location.href = "consulta.html"; return; }
+      if (!user) {
 
-        var data = doc.data();
-        datosOriginales = Object.assign({}, data);
+        window.location.href =
+          "login.html";
 
-        document.getElementById("nombre").value    = data.Nombre || "";
-        document.getElementById("apellido").value  = data.Apellido || "";
-        document.getElementById("edad").value      = data.Edad || "";
-        // Compatibilidad con campo antiguo "Quien lo trajo" y nuevo "quien_lo_trajo"
-        document.getElementById("responsable").value = data["Quién lo trajo"] || data["quien_lo_trajo"] || "";
-        document.getElementById("tanda").value     = data.tanda || "";
-        // Normalizar "Si" con o sin acento
-        var brazalete = data["Tiene brazalete"] || "";
-        document.getElementById("brazalete").value = (brazalete === "S\u00ed") ? "Si" : brazalete;
+        return;
+      }
 
-        document.getElementById("cargando").style.display   = "none";
-        document.getElementById("formEditar").style.display = "flex";
-      }).catch(function(err) {
-        document.getElementById("cargando").textContent = "Error al cargar datos.";
-        console.error(err);
-      });
-    });
+      if (!id) {
 
-    document.getElementById("formEditar").addEventListener("submit", function(e) {
-      e.preventDefault();
+        alert(
+          "No se encontro el ID."
+        );
 
-      var btn     = document.getElementById("btnGuardar");
-      var errorEl = document.getElementById("mensajeError");
-      btn.disabled    = true;
-      btn.textContent = "Guardando...";
-      errorEl.style.display = "none";
+        window.location.href =
+          "consulta.html";
 
-      var nuevosDatos = {
-        Nombre:            document.getElementById("nombre").value.trim(),
-        Apellido:          document.getElementById("apellido").value.trim(),
-        Edad:              parseInt(document.getElementById("edad").value.trim(), 10),
-        "quien_lo_trajo":  document.getElementById("responsable").value.trim(),
-        tanda:             document.getElementById("tanda").value,
-        "Tiene brazalete": document.getElementById("brazalete").value,
-        ultimaEdicion:     firebase.firestore.Timestamp.now(),
-        editadoPor:        auth.currentUser ? auth.currentUser.email : "desconocido"
-      };
+        return;
+      }
 
-      var historialRef = db.collection("historial_ediciones");
-      // Campos a comparar usando los nombres nuevos (sin acento/tilde)
-      var camposComparar = ["Nombre", "Apellido", "Edad", "quien_lo_trajo", "tanda", "Tiene brazalete"];
-      var promesasHistorial = [];
+      // =========================
+      // CARGAR DOCUMENTO
+      // =========================
+      db.collection("ninos")
+        .doc(id)
+        .get()
 
-      camposComparar.forEach(function(campo) {
-        // Para compatibilidad: "Quién lo trajo" (antiguo) vs "quien_lo_trajo" (nuevo)
-        var valorAntes;
-        if (campo === "quien_lo_trajo") {
-          valorAntes = datosOriginales["Quién lo trajo"] || datosOriginales["quien_lo_trajo"] || "";
-        } else if (campo === "tanda") {
-          valorAntes = datosOriginales["tanda"] || datosOriginales["Tanda"] || "";
-        } else {
-          valorAntes = datosOriginales[campo] !== undefined ? datosOriginales[campo] : "";
-        }
-        var antes   = String(valorAntes);
-        var despues = String(nuevosDatos[campo] !== undefined ? nuevosDatos[campo] : "");
+        .then(function(doc) {
 
-        if (antes !== despues) {
-          promesasHistorial.push(historialRef.add({
-            campo:      campo,
-            antes:      antes,
-            despues:    despues,
-            editadoPor: auth.currentUser ? auth.currentUser.email : "desconocido",
-            editadoEn:  firebase.firestore.Timestamp.now(),
-            idDocumento: id
-          }));
-        }
-      });
+          if (!doc.exists) {
 
-      db.collection("ninos").doc(id).update(nuevosDatos)
-        .then(function() { return Promise.all(promesasHistorial); })
-        .then(function() {
-          localStorage.removeItem("registroEditarId");
-          window.location.href = "consulta.html";
+            alert(
+              "Registro no encontrado."
+            );
+
+            window.location.href =
+              "consulta.html";
+
+            return;
+          }
+
+          var data = doc.data();
+
+          datosOriginales =
+            Object.assign({}, data);
+
+          document.getElementById("nombre").value =
+            data.nombre || "";
+
+          document.getElementById("apellido").value =
+            data.apellido || "";
+
+          document.getElementById("edad").value =
+            data.edad || "";
+
+          document.getElementById("responsable").value =
+            data.quienLoTrajo || "";
+
+          document.getElementById("tanda").value =
+            data.tanda || "";
+
+          document.getElementById("brazalete").value =
+            data.tieneBrazalete
+              ? "si"
+              : "no";
+
+          document.getElementById("cargando")
+            .style.display = "none";
+
+          document.getElementById("formEditar")
+            .style.display = "flex";
+
         })
+
         .catch(function(err) {
-          errorEl.textContent  = "Error al guardar: " + err.message;
-          errorEl.style.display = "block";
-          btn.disabled    = false;
-          btn.textContent = "Guardar Cambios";
+
+          console.error(err);
+
+          document.getElementById("cargando")
+            .textContent =
+            "Error al cargar.";
+
         });
     });
+
+    // =========================
+    // GUARDAR
+    // =========================
+    document.getElementById("formEditar")
+
+      .addEventListener(
+        "submit",
+
+        function(e) {
+
+          e.preventDefault();
+
+          var btn =
+            document.getElementById(
+              "btnGuardar"
+            );
+
+          var errorEl =
+            document.getElementById(
+              "mensajeError"
+            );
+
+          btn.disabled = true;
+
+          btn.textContent =
+            "Guardando...";
+
+          errorEl.style.display =
+            "none";
+
+          // =========================
+          // NUEVOS DATOS
+          // =========================
+          var nuevosDatos = {
+
+            nombre:
+
+              document.getElementById(
+                "nombre"
+              )
+
+              .value
+
+              .trim(),
+
+            apellido:
+
+              document.getElementById(
+                "apellido"
+              )
+
+              .value
+
+              .trim(),
+
+            edad:
+
+              parseInt(
+
+                document.getElementById(
+                  "edad"
+                )
+
+                .value
+
+                .trim(),
+
+                10
+              ),
+
+            quienLoTrajo:
+
+              document.getElementById(
+                "responsable"
+              )
+
+              .value
+
+              .trim(),
+
+            tanda:
+
+              document.getElementById(
+                "tanda"
+              )
+
+              .value,
+
+            tieneBrazalete:
+
+              document.getElementById(
+                "brazalete"
+              )
+
+              .value === "si",
+
+            ultimaEdicion:
+              firebase.firestore.Timestamp.now(),
+
+            editadoPor:
+
+              auth.currentUser
+                ? auth.currentUser.email
+                : "desconocido"
+          };
+
+          // =========================
+          // HISTORIAL
+          // =========================
+          var historialRef =
+            db.collection(
+              "historial_ediciones"
+            );
+
+          var camposComparar = [
+
+            "nombre",
+
+            "apellido",
+
+            "edad",
+
+            "quienLoTrajo",
+
+            "tanda",
+
+            "tieneBrazalete"
+          ];
+
+          var promesasHistorial = [];
+
+          camposComparar.forEach(function(campo) {
+
+            var antes =
+              String(
+                datosOriginales[campo]
+                || ""
+              );
+
+            var despues =
+              String(
+                nuevosDatos[campo]
+                || ""
+              );
+
+            if (antes !== despues) {
+
+              promesasHistorial.push(
+
+                historialRef.add({
+
+                  campo: campo,
+
+                  antes: antes,
+
+                  despues: despues,
+
+                  editadoPor:
+
+                    auth.currentUser
+                      ? auth.currentUser.email
+                      : "desconocido",
+
+                  editadoEn:
+                    firebase.firestore.Timestamp.now(),
+
+                  idDocumento: id
+                })
+              );
+            }
+          });
+
+          // =========================
+          // UPDATE
+          // =========================
+          db.collection("ninos")
+            .doc(id)
+            .update(nuevosDatos)
+
+            .then(function() {
+
+              return Promise.all(
+                promesasHistorial
+              );
+
+            })
+
+            .then(function() {
+
+              localStorage.removeItem(
+                "registroEditarId"
+              );
+
+              window.location.href =
+                "consulta.html";
+
+            })
+
+            .catch(function(err) {
+
+              console.error(err);
+
+              errorEl.textContent =
+
+                "Error al guardar: " +
+
+                err.message;
+
+              errorEl.style.display =
+                "block";
+
+              btn.disabled = false;
+
+              btn.textContent =
+                "Guardar Cambios";
+
+            });
+        }
+      );
+
   </script>
+
 </body>
 </html>
+```
