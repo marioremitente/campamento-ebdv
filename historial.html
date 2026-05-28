@@ -23,7 +23,7 @@
             <th>ID Registro</th>
             <th>Campo</th>
             <th>Antes</th>
-            <th>Después</th>
+            <th>Despues</th>
             <th>Usuario</th>
             <th>Fecha</th>
           </tr>
@@ -34,7 +34,7 @@
       </table>
     </div>
 
-    <a href="consulta.html" class="btn btn-outline-light mt-4">← Volver</a>
+    <a href="consulta.html" class="btn btn-outline-light mt-4">&#8592; Volver</a>
   </div>
 
   <script src="footer.js"></script>
@@ -43,38 +43,40 @@
     auth.onAuthStateChanged(function(user) {
       if (!user) { window.location.href = "login.html"; return; }
 
-      const tabla = document.getElementById("contenidoHistorial");
+      var tabla = document.getElementById("contenidoHistorial");
 
       db.collection("historial_ediciones")
         .orderBy("editadoEn", "desc")
         .get()
-        .then(snapshot => {
+        .then(function(snapshot) {
           tabla.innerHTML = "";
           if (snapshot.empty) {
-            tabla.innerHTML = "<tr><td colspan='6' class='text-center text-secondary'>No hay cambios registrados todavía.</td></tr>";
+            tabla.innerHTML = "<tr><td colspan='6' class='text-center text-secondary'>No hay cambios registrados todavia.</td></tr>";
             return;
           }
-          snapshot.forEach(doc => {
-            const d = doc.data();
-            const fecha = d.editadoEn?.toDate ? d.editadoEn.toDate().toLocaleString("es-DO") : "Sin fecha";
-            const fila = document.createElement("tr");
-            fila.innerHTML = `
-              <td><small class="text-secondary">${d.idDocumento || "-"}</small></td>
-              <td>${d.campo || "-"}</td>
-              <td class="text-danger">${d.antes || "-"}</td>
-              <td class="text-success">${d.despues || "-"}</td>
-              <td><small>${d.editadoPor || "-"}</small></td>
-              <td><small>${fecha}</small></td>
-            `;
+          snapshot.forEach(function(doc) {
+            var d = doc.data();
+            var fecha = (d.editadoEn && d.editadoEn.toDate)
+              ? d.editadoEn.toDate().toLocaleString("es-DO")
+              : "Sin fecha";
+            var fila = document.createElement("tr");
+            fila.innerHTML =
+              "<td><small class='text-secondary'>" + (d.idDocumento || "-") + "</small></td>" +
+              "<td>" + (d.campo || "-") + "</td>" +
+              "<td class='text-danger'>" + (d.antes || "-") + "</td>" +
+              "<td class='text-success'>" + (d.despues || "-") + "</td>" +
+              "<td><small>" + (d.editadoPor || "-") + "</small></td>" +
+              "<td><small>" + fecha + "</small></td>";
             tabla.appendChild(fila);
           });
         })
-        .catch(err => {
+        .catch(function(err) {
           tabla.innerHTML = "<tr><td colspan='6' class='text-center text-danger'>Error al cargar historial.</td></tr>";
           console.error(err);
         });
     });
   </script>
 
+ 
 </body>
 </html>

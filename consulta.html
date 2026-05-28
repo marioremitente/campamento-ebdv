@@ -20,7 +20,7 @@
           <h2 class="mb-0">Consulta de Registros</h2>
           <small class="text-secondary" id="totalRegistros"></small>
         </div>
-        <button class="btn btn-outline-danger btn-sm" onclick="cerrarSesion()">Cerrar sesión</button>
+        <button class="btn btn-outline-danger btn-sm" onclick="cerrarSesion()">Cerrar sesion</button>
       </div>
 
       <!-- Filtros -->
@@ -40,7 +40,7 @@
         </div>
         <div class="col-md-3">
           <select id="busquedaAnio" class="form-select bg-secondary text-light border-0">
-            <option value="">Seleccionar año</option>
+            <option value="">Seleccionar anio</option>
           </select>
         </div>
       </div>
@@ -55,7 +55,7 @@
               <th>Responsable</th>
               <th>Tanda</th>
               <th>Brazalete</th>
-              <th>Año</th>
+              <th>Anio</th>
               <th>Registrado por</th>
               <th>Acciones</th>
             </tr>
@@ -63,7 +63,7 @@
           <tbody id="contenidoTabla">
             <tr>
               <td colspan="9" class="text-center text-secondary py-4">
-                Selecciona un año, tanda o escribe un nombre para ver los registros.
+                Selecciona un anio, tanda o escribe un nombre para ver los registros.
               </td>
             </tr>
           </tbody>
@@ -75,7 +75,7 @@
           <a href="index_registro.html" class="btn btn-outline-light w-100">+ Nuevo Registro</a>
         </div>
         <div class="col-md-3">
-          <a href="estadisticas-edad.html" class="btn btn-outline-light w-100">Estadísticas</a>
+          <a href="estadisticas-edad.html" class="btn btn-outline-light w-100">Estadisticas</a>
         </div>
         <div class="col-md-3">
           <a href="historial.html" class="btn btn-outline-light w-100">Historial</a>
@@ -87,7 +87,7 @@
     </div>
 
     <div id="contenidoRestringido" style="display: none;">
-      <div class="alert alert-danger mt-4">Contenido protegido. Debes iniciar sesión.</div>
+      <div class="alert alert-danger mt-4">Contenido protegido. Debes iniciar sesion.</div>
       <a href="login.html" class="btn btn-primary">Ir al Login</a>
     </div>
   </div>
@@ -100,19 +100,20 @@
     }
 
     function respaldarTodo() {
-      db.collection("niños").get().then(snapshot => {
-        const promesas = [];
-        snapshot.forEach(doc => {
-          promesas.push(db.collection("respaldo_niños").add({
-            ...doc.data(),
-            originalId: doc.id,
-            copiadoEn: firebase.firestore.Timestamp.now()
-          }));
+      db.collection("ninos").get().then(function(snapshot) {
+        var promesas = [];
+        snapshot.forEach(function(doc) {
+          promesas.push(db.collection("respaldo_ninos").add(
+            Object.assign({}, doc.data(), {
+              originalId: doc.id,
+              copiadoEn: firebase.firestore.Timestamp.now()
+            })
+          ));
         });
         return Promise.all(promesas);
       })
-      .then(() => alert("Respaldo completo realizado."))
-      .catch(err => alert("Error al respaldar: " + err.message));
+      .then(function() { alert("Respaldo completo realizado."); })
+      .catch(function(err) { alert("Error al respaldar: " + err.message); });
     }
 
     auth.onAuthStateChanged(function(user) {
@@ -127,92 +128,89 @@
     });
 
     function hayFiltroActivo() {
-      const texto = document.getElementById("busqueda").value.trim();
-      const edad = document.getElementById("busquedaEdad").value.trim();
-      const tanda = document.getElementById("busquedaTanda").value;
-      const anio = document.getElementById("busquedaAnio").value;
+      var texto = document.getElementById("busqueda").value.trim();
+      var edad  = document.getElementById("busquedaEdad").value.trim();
+      var tanda = document.getElementById("busquedaTanda").value;
+      var anio  = document.getElementById("busquedaAnio").value;
       return texto !== "" || edad !== "" || tanda !== "" || anio !== "";
     }
 
     function iniciarTabla() {
-      const inputNombre = document.getElementById("busqueda");
-      const inputEdad = document.getElementById("busquedaEdad");
-      const inputTanda = document.getElementById("busquedaTanda");
-      const inputAnio = document.getElementById("busquedaAnio");
+      var inputNombre = document.getElementById("busqueda");
+      var inputEdad   = document.getElementById("busquedaEdad");
+      var inputTanda  = document.getElementById("busquedaTanda");
+      var inputAnio   = document.getElementById("busquedaAnio");
 
-      // Cargar años disponibles
-      db.collection("niños").get().then(snapshot => {
-        const años = new Set();
-        snapshot.forEach(doc => {
-          const a = doc.data().Año;
-          if (a) años.add(a);
+      // Cargar anios disponibles desde el campo "anio"
+      db.collection("ninos").get().then(function(snapshot) {
+        var aniosSet = new Set();
+        snapshot.forEach(function(doc) {
+          var a = doc.data().anio;
+          if (a) aniosSet.add(a);
         });
 
-        const select = document.getElementById("busquedaAnio");
-        [...años].sort((a, b) => b - a).forEach(anio => {
-          const opt = document.createElement("option");
-          opt.value = anio;
-          opt.textContent = anio;
+        var select = document.getElementById("busquedaAnio");
+        Array.from(aniosSet).sort(function(a, b) { return b - a; }).forEach(function(a) {
+          var opt = document.createElement("option");
+          opt.value = a;
+          opt.textContent = a;
           select.appendChild(opt);
         });
       });
 
-      const cargar = () => {
-        const tabla = document.getElementById("contenidoTabla");
-        const totalEl = document.getElementById("totalRegistros");
+      function cargar() {
+        var tabla   = document.getElementById("contenidoTabla");
+        var totalEl = document.getElementById("totalRegistros");
 
-        // Si no hay ningún filtro activo, mostrar mensaje y no consultar
         if (!hayFiltroActivo()) {
-          tabla.innerHTML = `
-            <tr>
-              <td colspan="9" class="text-center text-secondary py-4">
-                Selecciona un año, tanda o escribe un nombre para ver los registros.
-              </td>
-            </tr>`;
+          tabla.innerHTML =
+            "<tr><td colspan='9' class='text-center text-secondary py-4'>" +
+            "Selecciona un anio, tanda o escribe un nombre para ver los registros." +
+            "</td></tr>";
           totalEl.textContent = "";
           return;
         }
 
-        const texto = document.getElementById("busqueda").value.toLowerCase().trim();
-        const edadFiltro = document.getElementById("busquedaEdad").value.trim();
-        const tandaFiltro = document.getElementById("busquedaTanda").value;
-        const anioFiltro = document.getElementById("busquedaAnio").value;
+        var texto       = document.getElementById("busqueda").value.toLowerCase().trim();
+        var edadFiltro  = document.getElementById("busquedaEdad").value.trim();
+        var tandaFiltro = document.getElementById("busquedaTanda").value;
+        var anioFiltro  = document.getElementById("busquedaAnio").value;
 
         tabla.innerHTML = "<tr><td colspan='9' class='text-center'>Cargando...</td></tr>";
 
-        db.collection("niños").get().then(snapshot => {
+        // Construir query con filtros Firestore cuando sea posible
+        var query = db.collection("ninos");
+        if (anioFiltro) query = query.where("anio", "==", parseInt(anioFiltro));
+        if (tandaFiltro) query = query.where("tanda", "==", tandaFiltro);
+
+        query.get().then(function(snapshot) {
           tabla.innerHTML = "";
-          let count = 0;
+          var count = 0;
 
-          snapshot.forEach(doc => {
-            const d = doc.data();
-            const nombreCompleto = `${d.Nombre || ""} ${d.Apellido || ""}`.toLowerCase();
-            const coincideNombre = !texto || nombreCompleto.includes(texto);
-            const coincideEdad = !edadFiltro || d.Edad == edadFiltro;
-            const coincideTanda = !tandaFiltro || d.Tanda === tandaFiltro;
-            const coincideAnio = !anioFiltro || String(d.Año) === anioFiltro;
+          snapshot.forEach(function(doc) {
+            var d = doc.data();
+            var nombreCompleto = ((d.Nombre || "") + " " + (d.Apellido || "")).toLowerCase();
+            var coincideNombre = !texto || nombreCompleto.includes(texto);
+            var coincideEdad   = !edadFiltro || String(d.Edad) === edadFiltro;
 
-            if (coincideNombre && coincideEdad && coincideTanda && coincideAnio) {
+            if (coincideNombre && coincideEdad) {
               count++;
-              const fila = document.createElement("tr");
-              fila.innerHTML = `
-                <td>${d.Nombre || "-"}</td>
-                <td>${d.Apellido || "-"}</td>
-                <td>${d.Edad || "-"}</td>
-                <td>${d["Quién lo trajo"] || "-"}</td>
-                <td>${d.Tanda || "-"}</td>
-                <td>
-                  <span class="badge ${d["Tiene brazalete"] === "Sí" ? "bg-success" : "bg-secondary"}">
-                    ${d["Tiene brazalete"] || "-"}
-                  </span>
-                </td>
-                <td><span class="badge bg-info text-dark">${d.Año || "-"}</span></td>
-                <td><small class="text-secondary">${d.registradoPor || "-"}</small></td>
-                <td>
-                  <button class="btn btn-sm btn-warning me-1" onclick="editarRegistro('${doc.id}')">Editar</button>
-                  <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${doc.id}')">Eliminar</button>
-                </td>
-              `;
+              var fila = document.createElement("tr");
+              var tieneBrazalete = d["Tiene brazalete"] === "Si" || d["Tiene brazalete"] === "S\u00ed";
+              fila.innerHTML =
+                "<td>" + (d.Nombre || "-") + "</td>" +
+                "<td>" + (d.Apellido || "-") + "</td>" +
+                "<td>" + (d.Edad || "-") + "</td>" +
+                "<td>" + (d["Quién lo trajo"] || d["quien_lo_trajo"] || "-") + "</td>" +
+                "<td>" + (d.tanda || "-") + "</td>" +
+                "<td><span class='badge " + (tieneBrazalete ? "bg-success" : "bg-secondary") + "'>" +
+                  (d["Tiene brazalete"] || "-") + "</span></td>" +
+                "<td><span class='badge bg-info text-dark'>" + (d.anio || "-") + "</span></td>" +
+                "<td><small class='text-secondary'>" + (d.registradoPor || "-") + "</small></td>" +
+                "<td>" +
+                  "<button class='btn btn-sm btn-warning me-1' onclick=\"editarRegistro('" + doc.id + "')\">Editar</button>" +
+                  "<button class='btn btn-sm btn-danger' onclick=\"eliminarRegistro('" + doc.id + "')\">Eliminar</button>" +
+                "</td>";
               tabla.appendChild(fila);
             }
           });
@@ -220,9 +218,9 @@
           if (count === 0) {
             tabla.innerHTML = "<tr><td colspan='9' class='text-center text-secondary'>No se encontraron registros con esos filtros.</td></tr>";
           }
-          totalEl.textContent = `${count} registro(s) encontrado(s)`;
+          totalEl.textContent = count + " registro(s) encontrado(s)";
         });
-      };
+      }
 
       inputNombre.addEventListener("input", cargar);
       inputEdad.addEventListener("input", cargar);
@@ -231,10 +229,10 @@
     }
 
     function eliminarRegistro(id) {
-      if (confirm("¿Seguro que quieres eliminar este registro?")) {
-        db.collection("niños").doc(id).delete()
-          .then(() => iniciarTabla())
-          .catch(err => alert("No se pudo eliminar: " + err.message));
+      if (confirm("Seguro que quieres eliminar este registro?")) {
+        db.collection("ninos").doc(id).delete()
+          .then(function() { iniciarTabla(); })
+          .catch(function(err) { alert("No se pudo eliminar: " + err.message); });
       }
     }
 
@@ -243,6 +241,5 @@
       window.location.href = "editar.html";
     }
   </script>
-
 </body>
 </html>

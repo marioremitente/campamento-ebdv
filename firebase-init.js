@@ -1,8 +1,8 @@
-// firebase-init.js — Inicialización única de Firebase
-// Incluir este archivo ANTES de cualquier otro script en todas las páginas
-
+// firebase-init.js — Inicializacion unica de Firebase
+// Incluir este archivo ANTES de cualquier otro script en todas las paginas
+ 
 if (!firebase.apps.length) {
-  const firebaseConfig = {
+  var firebaseConfig = {
     apiKey: "AIzaSyDLzjQyP2O_s9s1F8eZVCibtPjbw66-DDg",
     authDomain: "campamento-ebdv.firebaseapp.com",
     projectId: "campamento-ebdv",
@@ -12,7 +12,8 @@ if (!firebase.apps.length) {
   };
   firebase.initializeApp(firebaseConfig);
 }
-
+ 
 // Variables globales accesibles en todos los archivos
-const auth = firebase.auth();
-const db = firebase.firestore();
+var auth = firebase.auth();
+var db = firebase.firestore();
+ 
