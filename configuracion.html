@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuración — Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-init.js"></script>
+</head>
+<body class="bg-dark text-light p-4">
+  <div class="container" style="max-width: 650px;">
+
+    <div id="sinAcceso" style="display:none;">
+      <div class="alert alert-danger mt-5">Acceso restringido. Solo para el administrador.</div>
+      <a href="consulta.html" class="btn btn-outline-light">← Volver</a>
+    </div>
+
+    <div id="panelAdmin" style="display:none;">
+      <h2 class="mb-1">Configuración de Cupos</h2>
+      <p class="text-secondary mb-4">Los cambios aplican al año actual. Se reinician automáticamente cada año.</p>
+
+      <div class="card bg-secondary p-4 mb-4">
+        <h5 class="mb-3">Año actual: <span id="anioActual" class="text-info"></span></h5>
+
+        <div class="row g-3">
+          <!-- Primera tanda -->
+          <div class="col-12">
+            <h6 class="text-warning">Primera Tanda</h6>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Límite máximo</label>
+            <input type="number" id="limiteP1" class="form-control bg-dark text-light border-secondary" min="1" placeholder="Ej: 225">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Umbral de alerta</label>
+            <input type="number" id="umbralP1" class="form-control bg-dark text-light border-secondary" min="1" placeholder="Ej: 200">
+            <small class="text-secondary">Aviso cuando se alcance este número</small>
+          </div>
+
+          <!-- Segunda tanda -->
+          <div class="col-12 mt-2">
+            <h6 class="text-warning">Segunda Tanda</h6>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Límite máximo</label>
+            <input type="number" id="limiteP2" class="form-control bg-dark text-light border-secondary" min="1" placeholder="Ej: 275">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Umbral de alerta</label>
+            <input type="number" id="umbralP2" class="form-control bg-dark text-light border-secondary" min="1" placeholder="Ej: 250">
+            <small class="text-secondary">Aviso cuando se alcance este número</small>
+          </div>
+
+          <div class="col-12 mt-2">
+            <button class="btn btn-success w-100" onclick="guardarConfig()">Guardar Configuración</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado actual -->
+      <div id="estadoActual" class="mb-4" style="display:none;">
+        <h5>Estado actual del campamento</h5>
+        <div id="tarjetasEstado" class="row g-3"></div>
+      </div>
+
+      <div id="mensajeGuardado" class="alert alert-success" style="display:none;">
+        ✓ Configuración guardada correctamente.
+      </div>
+      <div id="mensajeError" class="alert alert-danger" style="display:none;"></div>
+
+      <a href="consulta.html" class="btn btn-outline-light mt-3">← Volver al panel</a>
+    </div>
+  </div>
+
+  <script src="footer.js"></script>
+
+  <script>
+    const ADMIN_EMAIL = "remitente2008@gmail.com";
+    const anio = new Date().getFullYear();
+
+    auth.onAuthStateChanged(async function(user) {
+      if (!user) { window.location.href = "login.html"; return; }
+
+      if (user.email !== ADMIN_EMAIL) {
+        document.getElementById("sinAcceso").style.display = "block";
+        return;
+      }
+
+      document.getElementById("panelAdmin").style.display = "block";
+      document.getElementById("anioActual").textContent = anio;
+
+      await cargarConfig();
+      await cargarEstado();
+    });
+
+    async function cargarConfig() {
+      try {
+        const doc = await db.collection("configuracion").doc(`cupos_${anio}`).get();
+        if (doc.exists) {
+          const d = doc.data();
+          document.getElementById("limiteP1").value = d.limiteP1 || "";
+          document.getElementById("umbralP1").value = d.umbralP1 || "";
+          document.getElementById("limiteP2").value = d.limiteP2 || "";
+          document.getElementById("umbralP2").value = d.umbralP2 || "";
+        }
+      } catch(err) {
+        console.error("Error al cargar config:", err);
+      }
+    }
+
+    async function cargarEstado() {
+      try {
+        const snapshot = await db.collection("niños").get();
+        let countP1 = 0, countP2 = 0;
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          if (String(d.Año) === String(anio)) {
+            if (d.Tanda === "Primera") countP1++;
+            else if (d.Tanda === "Segunda") countP2++;
+          }
+        });
+
+        const configDoc = await db.collection("configuracion").doc(`cupos_${anio}`).get();
+        const config = configDoc.exists ? configDoc.data() : {};
+
+        document.getElementById("estadoActual").style.display = "block";
+        document.getElementById("tarjetasEstado").innerHTML = `
+          <div class="col-md-6">
+            <div class="card bg-dark p-3 text-center border border-secondary">
+              <h6 class="text-warning">Primera Tanda</h6>
+              <h2>${countP1} / ${config.limiteP1 || "?"}</h2>
+              <small class="text-secondary">Umbral de alerta: ${config.umbralP1 || "?"}</small>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card bg-dark p-3 text-center border border-secondary">
+              <h6 class="text-warning">Segunda Tanda</h6>
+              <h2>${countP2} / ${config.limiteP2 || "?"}</h2>
+              <small class="text-secondary">Umbral de alerta: ${config.umbralP2 || "?"}</small>
+            </div>
+          </div>
+        `;
+      } catch(err) {
+        console.error("Error al cargar estado:", err);
+      }
+    }
+
+    async function guardarConfig() {
+      const limiteP1 = parseInt(document.getElementById("limiteP1").value);
+      const umbralP1 = parseInt(document.getElementById("umbralP1").value);
+      const limiteP2 = parseInt(document.getElementById("limiteP2").value);
+      const umbralP2 = parseInt(document.getElementById("umbralP2").value);
+
+      const mensajeGuardado = document.getElementById("mensajeGuardado");
+      const mensajeError = document.getElementById("mensajeError");
+      mensajeGuardado.style.display = "none";
+      mensajeError.style.display = "none";
+
+      // Validaciones
+      if (!limiteP1 || !umbralP1 || !limiteP2 || !umbralP2) {
+        mensajeError.textContent = "Todos los campos son requeridos.";
+        mensajeError.style.display = "block";
+        return;
+      }
+      if (umbralP1 >= limiteP1) {
+        mensajeError.textContent = "El umbral de alerta de la 1ra tanda debe ser menor que el límite.";
+        mensajeError.style.display = "block";
+        return;
+      }
+      if (umbralP2 >= limiteP2) {
+        mensajeError.textContent = "El umbral de alerta de la 2da tanda debe ser menor que el límite.";
+        mensajeError.style.display = "block";
+        return;
+      }
+
+      try {
+        await db.collection("configuracion").doc(`cupos_${anio}`).set({
+          limiteP1, umbralP1, limiteP2, umbralP2,
+          anio, actualizadoPor: auth.currentUser.email,
+          actualizadoEn: firebase.firestore.Timestamp.now()
+        });
+
+        // Registrar en historial
+        await db.collection("historial_ediciones").add({
+          campo: "Configuración de cupos",
+          antes: "—",
+          despues: `P1: límite ${limiteP1}, alerta ${umbralP1} | P2: límite ${limiteP2}, alerta ${umbralP2}`,
+          editadoPor: auth.currentUser.email,
+          editadoEn: firebase.firestore.Timestamp.now(),
+          idDocumento: `cupos_${anio}`,
+          tipo: "configuracion"
+        });
+
+        mensajeGuardado.style.display = "block";
+        setTimeout(() => mensajeGuardado.style.display = "none", 3000);
+        await cargarEstado();
+      } catch(err) {
+        mensajeError.textContent = "Error al guardar: " + err.message;
+        mensajeError.style.display = "block";
+      }
+    }
+  </script>
+</body>
+</html>
