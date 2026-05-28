@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Registro de Ninos</title>
 
   <link
@@ -25,19 +26,37 @@
       Registro de Ninos
     </h2>
 
-    <p class="text-secondary mb-4">
+    <p class="text-secondary mb-3">
       Campamento EBDV —
       <span id="anioActual"></span>
     </p>
 
-    <!-- ALERTA DE CUPOS -->
+    <!-- ESTADO DE CUPOS -->
     <div
-      id="alertaCupos"
-      class="alert alert-warning"
+      id="estadoCupos"
+      class="alert alert-info">
+
+      Cargando cupos...
+
+    </div>
+
+    <!-- ALERTAS -->
+    <div
+      id="mensajeExito"
+      class="alert alert-success"
       style="display:none;">
     </div>
 
-    <form id="formulario" class="row g-3">
+    <div
+      id="mensajeError"
+      class="alert alert-danger"
+      style="display:none;">
+    </div>
+
+    <!-- FORMULARIO -->
+    <form
+      id="formulario"
+      class="row g-3">
 
       <div class="col-md-6">
 
@@ -110,8 +129,7 @@
         <select
           id="tanda"
           class="form-select bg-secondary text-light border-0"
-          required
-        >
+          required>
 
           <option value="">
             Seleccionar tanda
@@ -138,8 +156,7 @@
         <select
           id="brazalete"
           class="form-select bg-secondary text-light border-0"
-          required
-        >
+          required>
 
           <option value="">
             Seleccionar
@@ -180,40 +197,32 @@
 
     </form>
 
-    <div
-      id="mensajeExito"
-      class="alert alert-success mt-3"
-      style="display:none;">
-    </div>
-
-    <div
-      id="mensajeError"
-      class="alert alert-danger mt-3"
-      style="display:none;">
-    </div>
-
   </div>
 
   <script>
 
     // =========================
-    // CONFIGURACION DE CUPOS
+    // CUPOS MAXIMOS
     // =========================
     const CUPOS = {
+
       primera: 225,
       segunda: 275
+
     };
 
     // =========================
     // ANIO ACTUAL
     // =========================
-    const anioActual = new Date().getFullYear();
+    const anioActual =
+      new Date().getFullYear();
 
     document.getElementById("anioActual")
-      .textContent = "Anio " + anioActual;
+      .textContent =
+      "Anio " + anioActual;
 
     // =========================
-    // LOGIN
+    // PROTEGER PAGINA
     // =========================
     auth.onAuthStateChanged(function(user) {
 
@@ -229,8 +238,10 @@
     // =========================
     async function verificarCupos() {
 
-      const alerta =
-        document.getElementById("alertaCupos");
+      const estado =
+        document.getElementById(
+          "estadoCupos"
+        );
 
       let primeraCount = 0;
       let segundaCount = 0;
@@ -245,58 +256,73 @@
         const d = doc.data();
 
         if (d.tanda === "primera") {
+
           primeraCount++;
         }
 
         if (d.tanda === "segunda") {
+
           segundaCount++;
         }
 
       });
 
-      let mensajes = [];
+      const primeraDisponible =
+        CUPOS.primera - primeraCount;
 
-      if (primeraCount >= CUPOS.primera) {
+      const segundaDisponible =
+        CUPOS.segunda - segundaCount;
 
-        mensajes.push(
-          "Primera tanda LLENA (" +
-          primeraCount +
-          "/" +
-          CUPOS.primera +
-          ")"
-        );
-      }
+      estado.innerHTML =
 
-      if (segundaCount >= CUPOS.segunda) {
+        "<strong>Primera tanda:</strong> " +
 
-        mensajes.push(
-          "Segunda tanda LLENA (" +
-          segundaCount +
-          "/" +
-          CUPOS.segunda +
-          ")"
-        );
-      }
+        primeraCount +
+        "/" +
+        CUPOS.primera +
 
-      if (mensajes.length > 0) {
+        " (" +
 
-        alerta.style.display = "block";
+        primeraDisponible +
 
-        alerta.innerHTML =
-          mensajes.join("<br>");
+        " disponibles)" +
 
+        "<br><br>" +
+
+        "<strong>Segunda tanda:</strong> " +
+
+        segundaCount +
+        "/" +
+        CUPOS.segunda +
+
+        " (" +
+
+        segundaDisponible +
+
+        " disponibles)";
+
+      // CAMBIO DE COLOR
+      if (
+        primeraCount >= CUPOS.primera ||
+        segundaCount >= CUPOS.segunda
+      ) {
+
+        estado.className =
+          "alert alert-danger";
       }
 
       else {
 
-        alerta.style.display = "none";
+        estado.className =
+          "alert alert-info";
       }
     }
 
+    // CARGAR AL INICIO
     verificarCupos();
 
     // =========================
-    // REGISTRO
+    // FORMULARIO
     // =========================
     document.getElementById("formulario")
       .addEventListener(
@@ -342,12 +368,22 @@
         error.style.display =
           "none";
 
+        // =========================
+        // DATOS
+        // =========================
         const tandaValor =
           document.getElementById("tanda")
             .value;
 
+        const edadValor =
+          parseInt(
+            document.getElementById("edad")
+              .value
+              .trim()
+          );
+
         // =========================
-        // VALIDAR CUPOS
+        // VALIDAR LIMITE
         // =========================
         const snapshot =
           await db.collection("ninos")
@@ -364,7 +400,8 @@
         if (cantidadActual >= limite) {
 
           error.textContent =
-            "No hay cupos disponibles para la tanda seleccionada.";
+
+            "La tanda seleccionada ya alcanzo el limite permitido.";
 
           error.style.display =
             "block";
@@ -392,12 +429,7 @@
               .value
               .trim(),
 
-          edad:
-            parseInt(
-              document.getElementById("edad")
-                .value
-                .trim()
-            ),
+          edad: edadValor,
 
           quienLoTrajo:
             document.getElementById("responsable")
@@ -436,8 +468,8 @@
 
           e.target.reset();
 
+          // ACTUALIZAR CUPOS
           verificarCupos();
-
         }
 
         catch(err) {
@@ -445,7 +477,7 @@
           console.error(err);
 
           error.textContent =
-            "Error al guardar.";
+            "Error al guardar registro.";
 
           error.style.display =
             "block";
