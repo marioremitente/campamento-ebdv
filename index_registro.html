@@ -14,39 +14,7 @@
 <body class="bg-dark text-light p-4">
   <div class="container" style="max-width: 700px;">
     <h2 class="mb-1">Registro de Niños</h2>
-    <p class="text-secondary mb-3">Campamento EBDV — <span id="anioActual"></span></p>
-
-    <!-- Alertas de cupo -->
-    <div id="alertaP1" class="alert alert-warning d-flex align-items-center mb-3" style="display:none !important;">
-      <strong>⚠ Primera Tanda:</strong>&nbsp;<span id="textoAlertaP1"></span>
-    </div>
-    <div id="alertaP2" class="alert alert-warning d-flex align-items-center mb-3" style="display:none !important;">
-      <strong>⚠ Segunda Tanda:</strong>&nbsp;<span id="textoAlertaP2"></span>
-    </div>
-    <div id="alertaLlenaP1" class="alert alert-danger d-flex align-items-center mb-3" style="display:none !important;">
-      <strong>🚫 Primera Tanda LLENA.</strong>&nbsp;No se pueden inscribir más niños en esta tanda.
-    </div>
-    <div id="alertaLlenaP2" class="alert alert-danger d-flex align-items-center mb-3" style="display:none !important;">
-      <strong>🚫 Segunda Tanda LLENA.</strong>&nbsp;No se pueden inscribir más niños en esta tanda.
-    </div>
-
-    <!-- Contador visible -->
-    <div class="row g-2 mb-4" id="contadores">
-      <div class="col-md-6">
-        <div class="card bg-secondary text-center p-2">
-          <small class="text-light">Primera Tanda</small>
-          <h4 class="mb-0" id="countP1Display">—</h4>
-          <small class="text-light" id="limiteP1Display"></small>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="card bg-secondary text-center p-2">
-          <small class="text-light">Segunda Tanda</small>
-          <h4 class="mb-0" id="countP2Display">—</h4>
-          <small class="text-light" id="limiteP2Display"></small>
-        </div>
-      </div>
-    </div>
+    <p class="text-secondary mb-4">Campamento EBDV — <span id="anioActual"></span></p>
 
     <form id="formulario" class="row g-3">
       <div class="col-md-6">
@@ -69,8 +37,8 @@
         <label class="form-label">Tanda</label>
         <select id="tanda" class="form-select bg-secondary text-light border-0" required>
           <option value="">Seleccionar tanda</option>
-          <option value="Primera" id="optPrimera">Primera</option>
-          <option value="Segunda" id="optSegunda">Segunda</option>
+          <option value="Primera">Primera</option>
+          <option value="Segunda">Segunda</option>
         </select>
       </div>
       <div class="col-md-6">
@@ -94,163 +62,45 @@
   <script src="footer.js"></script>
 
   <script>
-    const anio = new Date().getFullYear();
-    document.getElementById("anioActual").textContent = "Año " + anio;
+    const anioActual = new Date().getFullYear();
+    document.getElementById("anioActual").textContent = "Año " + anioActual;
 
-    let config = { limiteP1: 225, umbralP1: 200, limiteP2: 275, umbralP2: 250 };
-    let countP1 = 0, countP2 = 0;
-
-    auth.onAuthStateChanged(async function(user) {
-      if (!user) { window.location.href = "login.html"; return; }
-      await cargarConfigYContadores();
+    auth.onAuthStateChanged(function(user) {
+      if (!user) window.location.href = "login.html";
     });
-
-    async function cargarConfigYContadores() {
-      try {
-        // Cargar configuración
-        const configDoc = await db.collection("configuracion").doc(`cupos_${anio}`).get();
-        if (configDoc.exists) config = configDoc.data();
-
-        // Contar registros del año actual
-        const snapshot = await db.collection("niños").get();
-        countP1 = 0; countP2 = 0;
-        snapshot.forEach(doc => {
-          const d = doc.data();
-          if (String(d.Año) === String(anio)) {
-            if (d.Tanda === "Primera") countP1++;
-            else if (d.Tanda === "Segunda") countP2++;
-          }
-        });
-
-        actualizarUI();
-      } catch(err) {
-        console.error("Error al cargar configuración:", err);
-      }
-    }
-
-    function actualizarUI() {
-      // Contadores
-      document.getElementById("countP1Display").textContent = countP1;
-      document.getElementById("limiteP1Display").textContent = `de ${config.limiteP1} máximo`;
-      document.getElementById("countP2Display").textContent = countP2;
-      document.getElementById("limiteP2Display").textContent = `de ${config.limiteP2} máximo`;
-
-      // Colores de contadores
-      document.getElementById("countP1Display").className = `mb-0 ${countP1 >= config.limiteP1 ? "text-danger" : countP1 >= config.umbralP1 ? "text-warning" : "text-white"}`;
-      document.getElementById("countP2Display").className = `mb-0 ${countP2 >= config.limiteP2 ? "text-danger" : countP2 >= config.umbralP2 ? "text-warning" : "text-white"}`;
-
-      // Alertas Primera Tanda
-      const alertaP1 = document.getElementById("alertaP1");
-      const alertaLlenaP1 = document.getElementById("alertaLlenaP1");
-      const optPrimera = document.getElementById("optPrimera");
-
-      if (countP1 >= config.limiteP1) {
-        alertaLlenaP1.style.display = "flex";
-        alertaP1.style.display = "none";
-        optPrimera.disabled = true;
-        optPrimera.textContent = `Primera (LLENA — ${countP1}/${config.limiteP1})`;
-      } else if (countP1 >= config.umbralP1) {
-        alertaP1.style.display = "flex";
-        alertaLlenaP1.style.display = "none";
-        document.getElementById("textoAlertaP1").textContent =
-          `Quedan solo ${config.limiteP1 - countP1} espacios disponibles (${countP1}/${config.limiteP1}).`;
-        optPrimera.disabled = false;
-        optPrimera.textContent = "Primera";
-      } else {
-        alertaP1.style.display = "none";
-        alertaLlenaP1.style.display = "none";
-        optPrimera.disabled = false;
-        optPrimera.textContent = "Primera";
-      }
-
-      // Alertas Segunda Tanda
-      const alertaP2 = document.getElementById("alertaP2");
-      const alertaLlenaP2 = document.getElementById("alertaLlenaP2");
-      const optSegunda = document.getElementById("optSegunda");
-
-      if (countP2 >= config.limiteP2) {
-        alertaLlenaP2.style.display = "flex";
-        alertaP2.style.display = "none";
-        optSegunda.disabled = true;
-        optSegunda.textContent = `Segunda (LLENA — ${countP2}/${config.limiteP2})`;
-      } else if (countP2 >= config.umbralP2) {
-        alertaP2.style.display = "flex";
-        alertaLlenaP2.style.display = "none";
-        document.getElementById("textoAlertaP2").textContent =
-          `Quedan solo ${config.limiteP2 - countP2} espacios disponibles (${countP2}/${config.limiteP2}).`;
-        optSegunda.disabled = false;
-        optSegunda.textContent = "Segunda";
-      } else {
-        alertaP2.style.display = "none";
-        alertaLlenaP2.style.display = "none";
-        optSegunda.disabled = false;
-        optSegunda.textContent = "Segunda";
-      }
-    }
 
     document.getElementById("formulario").addEventListener("submit", async function(e) {
       e.preventDefault();
       const user = auth.currentUser;
       if (!user) { window.location.href = "login.html"; return; }
 
-      const tanda = document.getElementById("tanda").value;
+      const btn = document.getElementById("btnRegistrar");
       const exito = document.getElementById("mensajeExito");
       const error = document.getElementById("mensajeError");
-      exito.style.display = "none";
-      error.style.display = "none";
 
-      // Verificar cupo antes de guardar
-      if (tanda === "Primera" && countP1 >= config.limiteP1) {
-        error.textContent = "La Primera Tanda está llena. No se pueden agregar más niños.";
-        error.style.display = "block";
-        return;
-      }
-      if (tanda === "Segunda" && countP2 >= config.limiteP2) {
-        error.textContent = "La Segunda Tanda está llena. No se pueden agregar más niños.";
-        error.style.display = "block";
-        return;
-      }
-
-      const btn = document.getElementById("btnRegistrar");
       btn.disabled = true;
       btn.textContent = "Guardando...";
+      exito.style.display = "none";
+      error.style.display = "none";
 
       const nuevoRegistro = {
         Nombre: document.getElementById("nombre").value.trim(),
         Apellido: document.getElementById("apellido").value.trim(),
         Edad: parseInt(document.getElementById("edad").value.trim(), 10),
         "Quién lo trajo": document.getElementById("responsable").value.trim(),
-        Tanda: tanda,
+        Tanda: document.getElementById("tanda").value,
         "Tiene brazalete": document.getElementById("brazalete").value,
-        Año: anio,
+        Año: new Date().getFullYear(),
         registradoPor: user.email,
         fechaRegistro: firebase.firestore.Timestamp.now()
       };
 
       try {
-        const docRef = await db.collection("niños").add(nuevoRegistro);
-
-        // Registrar en historial
-        await db.collection("historial_ediciones").add({
-          tipo: "registro_nuevo",
-          campo: "Nuevo registro",
-          antes: "—",
-          despues: `${nuevoRegistro.Nombre} ${nuevoRegistro.Apellido} — ${tanda} tanda`,
-          editadoPor: user.email,
-          editadoEn: firebase.firestore.Timestamp.now(),
-          idDocumento: docRef.id
-        });
-
-        // Actualizar contador local
-        if (tanda === "Primera") countP1++;
-        else countP2++;
-
-        actualizarUI();
-
-        exito.textContent = `✓ ${nuevoRegistro.Nombre} ${nuevoRegistro.Apellido} registrado correctamente. (${tanda} tanda: ${tanda === "Primera" ? countP1 : countP2}/${tanda === "Primera" ? config.limiteP1 : config.limiteP2})`;
+        await db.collection("niños").add(nuevoRegistro);
+        exito.textContent = `✓ ${nuevoRegistro.Nombre} ${nuevoRegistro.Apellido} registrado correctamente (${nuevoRegistro.Año}).`;
         exito.style.display = "block";
         e.target.reset();
-      } catch(err) {
+      } catch (err) {
         console.error("Error al guardar:", err);
         error.textContent = "Error al guardar el registro. Intenta de nuevo.";
         error.style.display = "block";
@@ -260,5 +110,12 @@
       }
     });
   </script>
+<footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; font-size: 0.9em; color: #555;">
+    <p>
+      © Mario Feliz. Todos los derechos reservados. El uso no autorizado de este sistema o su contenido sin el consentimiento del autor 
+      puede ser considerado una violación legal y está sujeto a sanciones. Para consultas o permisos, contactar al 
+      <strong>809-208-3789</strong> o por correo a <strong>marioremitente@gmail.com</strong>.
+    </p>
+  </footer>
 </body>
 </html>
