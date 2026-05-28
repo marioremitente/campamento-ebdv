@@ -116,7 +116,7 @@
         edad: edadValor,
         quienLoTrajo: document.getElementById("responsable").value.trim(),
         tanda: tandaValor,
-        tieneBrazalete: brazaleteValor,
+        tieneBrazalete: brazaleteValor === "si",
         anio: new Date().getFullYear(),
         registradoPor: user.email,
         fechaRegistro: firebase.firestore.Timestamp.now()
