@@ -1,10 +1,8 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Registro de Ninos</title>
 
   <link
@@ -12,7 +10,6 @@
     rel="stylesheet"
   >
 
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
@@ -22,82 +19,103 @@
 
 <body class="bg-dark text-light p-4">
 
-  <div class="container" style="max-width: 700px;">
+  <div class="container" style="max-width:700px;">
 
-    <h2 class="mb-1">Registro de Ninos</h2>
+    <h2 class="mb-1">
+      Registro de Ninos
+    </h2>
 
     <p class="text-secondary mb-4">
       Campamento EBDV —
       <span id="anioActual"></span>
     </p>
 
-    <!-- FORMULARIO -->
+    <!-- ALERTA DE CUPOS -->
+    <div
+      id="alertaCupos"
+      class="alert alert-warning"
+      style="display:none;">
+    </div>
+
     <form id="formulario" class="row g-3">
 
-      <!-- Nombre -->
       <div class="col-md-6">
-        <label class="form-label">Nombre</label>
+
+        <label class="form-label">
+          Nombre
+        </label>
 
         <input
           type="text"
           id="nombre"
           class="form-control bg-secondary text-light border-0"
-          placeholder="Nombre"
           required
         >
+
       </div>
 
-      <!-- Apellido -->
       <div class="col-md-6">
-        <label class="form-label">Apellido</label>
+
+        <label class="form-label">
+          Apellido
+        </label>
 
         <input
           type="text"
           id="apellido"
           class="form-control bg-secondary text-light border-0"
-          placeholder="Apellido"
           required
         >
+
       </div>
 
-      <!-- Edad -->
       <div class="col-md-4">
-        <label class="form-label">Edad</label>
+
+        <label class="form-label">
+          Edad
+        </label>
 
         <input
           type="number"
           id="edad"
-          class="form-control bg-secondary text-light border-0"
-          placeholder="Edad"
           min="1"
           max="18"
+          class="form-control bg-secondary text-light border-0"
           required
         >
+
       </div>
 
-      <!-- Responsable -->
       <div class="col-md-8">
-        <label class="form-label">Quien lo trajo</label>
+
+        <label class="form-label">
+          Quien lo trajo
+        </label>
 
         <input
           type="text"
           id="responsable"
           class="form-control bg-secondary text-light border-0"
-          placeholder="Nombre del responsable"
           required
         >
+
       </div>
 
-      <!-- Tanda -->
       <div class="col-md-6">
-        <label class="form-label">Tanda</label>
+
+        <label class="form-label">
+          Tanda
+        </label>
 
         <select
           id="tanda"
           class="form-select bg-secondary text-light border-0"
           required
         >
-          <option value="">Seleccionar tanda</option>
+
+          <option value="">
+            Seleccionar tanda
+          </option>
 
           <option value="primera">
             Primera
@@ -106,19 +124,26 @@
           <option value="segunda">
             Segunda
           </option>
+
         </select>
+
       </div>
 
-      <!-- Brazalete -->
       <div class="col-md-6">
-        <label class="form-label">Tiene brazalete</label>
+
+        <label class="form-label">
+          Tiene brazalete
+        </label>
 
         <select
           id="brazalete"
           class="form-select bg-secondary text-light border-0"
           required
         >
-          <option value="">Seleccionar</option>
+
+          <option value="">
+            Seleccionar
+          </option>
 
           <option value="si">
             Si
@@ -127,242 +152,315 @@
           <option value="no">
             No
           </option>
+
         </select>
+
       </div>
 
-      <!-- BOTONES -->
       <div class="col-12 d-flex gap-2">
 
         <button
           type="submit"
           id="btnRegistrar"
-          class="btn btn-primary"
-        >
+          class="btn btn-primary">
+
           Registrar
+
         </button>
 
         <a
           href="consulta.html"
-          class="btn btn-outline-light"
-        >
+          class="btn btn-outline-light">
+
           Ver Consultas
+
         </a>
 
       </div>
 
     </form>
 
-    <!-- MENSAJES -->
     <div
       id="mensajeExito"
       class="alert alert-success mt-3"
-      style="display:none;"
-    ></div>
+      style="display:none;">
+    </div>
 
     <div
       id="mensajeError"
       class="alert alert-danger mt-3"
-      style="display:none;"
-    ></div>
+      style="display:none;">
+    </div>
 
   </div>
 
-  <script src="footer.js"></script>
-
   <script>
 
-    // Mostrar año actual
+    // =========================
+    // CONFIGURACION DE CUPOS
+    // =========================
+    const CUPOS = {
+      primera: 225,
+      segunda: 275
+    };
+
+    // =========================
+    // ANIO ACTUAL
+    // =========================
     const anioActual = new Date().getFullYear();
 
-    document.getElementById("anioActual").textContent =
-      "Anio " + anioActual;
+    document.getElementById("anioActual")
+      .textContent = "Anio " + anioActual;
 
-    // Verificar sesión
+    // =========================
+    // LOGIN
+    // =========================
     auth.onAuthStateChanged(function(user) {
 
       if (!user) {
-        window.location.href = "login.html";
-      }
 
+        window.location.href =
+          "login.html";
+      }
     });
 
-    // FORMULARIO
-    document
-      .getElementById("formulario")
-      .addEventListener("submit", async function(e) {
+    // =========================
+    // VERIFICAR CUPOS
+    // =========================
+    async function verificarCupos() {
+
+      const alerta =
+        document.getElementById("alertaCupos");
+
+      let primeraCount = 0;
+      let segundaCount = 0;
+
+      const snapshot =
+        await db.collection("ninos")
+          .where("anio", "==", anioActual)
+          .get();
+
+      snapshot.forEach(function(doc) {
+
+        const d = doc.data();
+
+        if (d.tanda === "primera") {
+          primeraCount++;
+        }
+
+        if (d.tanda === "segunda") {
+          segundaCount++;
+        }
+
+      });
+
+      let mensajes = [];
+
+      if (primeraCount >= CUPOS.primera) {
+
+        mensajes.push(
+          "Primera tanda LLENA (" +
+          primeraCount +
+          "/" +
+          CUPOS.primera +
+          ")"
+        );
+      }
+
+      if (segundaCount >= CUPOS.segunda) {
+
+        mensajes.push(
+          "Segunda tanda LLENA (" +
+          segundaCount +
+          "/" +
+          CUPOS.segunda +
+          ")"
+        );
+      }
+
+      if (mensajes.length > 0) {
+
+        alerta.style.display = "block";
+
+        alerta.innerHTML =
+          mensajes.join("<br>");
+
+      }
+
+      else {
+
+        alerta.style.display = "none";
+      }
+    }
+
+    verificarCupos();
+
+    // =========================
+    // REGISTRO
+    // =========================
+    document.getElementById("formulario")
+      .addEventListener(
+        "submit",
+        async function(e) {
 
         e.preventDefault();
 
-        const user = auth.currentUser;
+        const user =
+          auth.currentUser;
 
         if (!user) {
-          window.location.href = "login.html";
+
+          window.location.href =
+            "login.html";
+
           return;
         }
 
-        const btn = document.getElementById("btnRegistrar");
-
-        const exito =
-          document.getElementById("mensajeExito");
-
-        const error =
-          document.getElementById("mensajeError");
-
-        // Reset UI
-        btn.disabled = true;
-        btn.textContent = "Guardando...";
-
-        exito.style.display = "none";
-        error.style.display = "none";
-
-        // Valores
-        const nombre =
-          document.getElementById("nombre")
-          .value
-          .trim();
-
-        const apellido =
-          document.getElementById("apellido")
-          .value
-          .trim();
-
-        const edad =
-          parseInt(
-            document.getElementById("edad").value.trim(),
-            10
+        const btn =
+          document.getElementById(
+            "btnRegistrar"
           );
 
-        const quienLoTrajo =
-          document.getElementById("responsable")
-          .value
-          .trim();
+        const exito =
+          document.getElementById(
+            "mensajeExito"
+          );
 
-        const tanda =
-          document.getElementById("tanda").value;
+        const error =
+          document.getElementById(
+            "mensajeError"
+          );
 
-        const tieneBrazalete =
-          document.getElementById("brazalete").value;
+        btn.disabled = true;
 
-        // VALIDACIONES
+        btn.textContent =
+          "Guardando...";
 
-        if (!nombre || !apellido || !quienLoTrajo) {
+        exito.style.display =
+          "none";
+
+        error.style.display =
+          "none";
+
+        const tandaValor =
+          document.getElementById("tanda")
+            .value;
+
+        // =========================
+        // VALIDAR CUPOS
+        // =========================
+        const snapshot =
+          await db.collection("ninos")
+            .where("anio", "==", anioActual)
+            .where("tanda", "==", tandaValor)
+            .get();
+
+        const cantidadActual =
+          snapshot.size;
+
+        const limite =
+          CUPOS[tandaValor];
+
+        if (cantidadActual >= limite) {
 
           error.textContent =
-            "Todos los campos son obligatorios.";
+            "No hay cupos disponibles para la tanda seleccionada.";
 
-          error.style.display = "block";
+          error.style.display =
+            "block";
 
           btn.disabled = false;
-          btn.textContent = "Registrar";
+
+          btn.textContent =
+            "Registrar";
 
           return;
         }
 
-        if (isNaN(edad) || edad < 1 || edad > 18) {
-
-          error.textContent =
-            "La edad debe estar entre 1 y 18.";
-
-          error.style.display = "block";
-
-          btn.disabled = false;
-          btn.textContent = "Registrar";
-
-          return;
-        }
-
-        if (!tanda) {
-
-          error.textContent =
-            "Debes seleccionar una tanda.";
-
-          error.style.display = "block";
-
-          btn.disabled = false;
-          btn.textContent = "Registrar";
-
-          return;
-        }
-
-        if (!tieneBrazalete) {
-
-          error.textContent =
-            "Debes indicar si tiene brazalete.";
-
-          error.style.display = "block";
-
-          btn.disabled = false;
-          btn.textContent = "Registrar";
-
-          return;
-        }
-
-        // OBJETO LIMPIO
+        // =========================
+        // CREAR REGISTRO
+        // =========================
         const nuevoRegistro = {
 
-          nombre: nombre,
+          nombre:
+            document.getElementById("nombre")
+              .value
+              .trim(),
 
-          apellido: apellido,
+          apellido:
+            document.getElementById("apellido")
+              .value
+              .trim(),
 
-          edad: edad,
+          edad:
+            parseInt(
+              document.getElementById("edad")
+                .value
+                .trim()
+            ),
 
-          quienLoTrajo: quienLoTrajo,
+          quienLoTrajo:
+            document.getElementById("responsable")
+              .value
+              .trim(),
 
-          tanda: tanda,
+          tanda: tandaValor,
 
-          tieneBrazalete: tieneBrazalete,
+          tieneBrazalete:
+            document.getElementById("brazalete")
+              .value,
 
           anio: anioActual,
 
-          registradoPor: user.email,
+          registradoPor:
+            user.email,
 
           fechaRegistro:
             firebase.firestore.Timestamp.now()
-
         };
 
         try {
 
-          // Guardar
-          await db
-            .collection("ninos")
+          await db.collection("ninos")
             .add(nuevoRegistro);
 
-          // Mensaje éxito
           exito.textContent =
-            nombre +
+
+            nuevoRegistro.nombre +
             " " +
-            apellido +
+            nuevoRegistro.apellido +
             " registrado correctamente.";
 
-          exito.style.display = "block";
+          exito.style.display =
+            "block";
 
-          // Limpiar formulario
           e.target.reset();
 
+          verificarCupos();
+
         }
-        catch (err) {
+
+        catch(err) {
 
           console.error(err);
 
           error.textContent =
-            "Error al guardar el registro.";
+            "Error al guardar.";
 
-          error.style.display = "block";
-
+          error.style.display =
+            "block";
         }
+
         finally {
 
           btn.disabled = false;
 
-          btn.textContent = "Registrar";
-
+          btn.textContent =
+            "Registrar";
         }
-
       });
 
   </script>
 
 </body>
 </html>
-```
