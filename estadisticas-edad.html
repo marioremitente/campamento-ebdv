@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Estadísticas</title>
+  <title>Estadisticas</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -13,19 +13,19 @@
 </head>
 <body class="bg-dark text-light p-4">
   <div class="container" style="max-width: 700px;">
-    <h2 class="mb-1">Estadísticas</h2>
+    <h2 class="mb-1">Estadisticas</h2>
     <p class="text-secondary mb-3">Resumen de registros del campamento</p>
 
     <div class="mb-4">
       <select id="filtroAnio" class="form-select bg-secondary text-light border-0" style="max-width: 200px;">
-        <option value="">Todos los años</option>
+        <option value="">Todos los anios</option>
       </select>
     </div>
 
-    <div id="cargando" class="text-secondary">Cargando estadísticas...</div>
+    <div id="cargando" class="text-secondary">Cargando estadisticas...</div>
     <div id="reporte" class="mt-3"></div>
 
-    <a href="consulta.html" class="btn btn-outline-light mt-4">← Volver</a>
+    <a href="consulta.html" class="btn btn-outline-light mt-4">&#8592; Volver</a>
   </div>
 
   <script src="footer.js"></script>
@@ -36,109 +36,117 @@
     auth.onAuthStateChanged(function(user) {
       if (!user) { window.location.href = "login.html"; return; }
 
-      db.collection("niños").get().then(snapshot => {
+      db.collection("ninos").get().then(function(snapshot) {
         document.getElementById("cargando").style.display = "none";
 
         if (snapshot.empty) {
-          document.getElementById("reporte").innerHTML = "<p class='text-secondary'>No hay registros todavía.</p>";
+          document.getElementById("reporte").innerHTML = "<p class='text-secondary'>No hay registros todavia.</p>";
           return;
         }
 
         todosLosDatos = [];
-        snapshot.forEach(doc => todosLosDatos.push(doc.data()));
+        snapshot.forEach(function(doc) { todosLosDatos.push(doc.data()); });
 
-        const años = [...new Set(todosLosDatos.map(d => d.Año).filter(Boolean))].sort((a, b) => b - a);
-        const select = document.getElementById("filtroAnio");
-        años.forEach(anio => {
-          const opt = document.createElement("option");
+        // Obtener anios unicos, evitar undefined/null
+        var anios = [];
+        todosLosDatos.forEach(function(d) {
+          var a = d.anio;
+          if (a && !anios.includes(a)) anios.push(a);
+        });
+        anios.sort(function(a, b) { return b - a; });
+
+        var select = document.getElementById("filtroAnio");
+        anios.forEach(function(anio) {
+          var opt = document.createElement("option");
           opt.value = anio;
           opt.textContent = anio;
           select.appendChild(opt);
         });
 
-        const anioActual = new Date().getFullYear();
-        if (años.includes(anioActual)) select.value = anioActual;
+        var anioActual = new Date().getFullYear();
+        if (anios.includes(anioActual)) select.value = anioActual;
 
         mostrarEstadisticas(select.value);
-        select.addEventListener("change", () => mostrarEstadisticas(select.value));
+        select.addEventListener("change", function() { mostrarEstadisticas(select.value); });
 
-      }).catch(err => {
-        document.getElementById("cargando").textContent = "Error al cargar estadísticas.";
+      }).catch(function(err) {
+        document.getElementById("cargando").textContent = "Error al cargar estadisticas.";
         console.error(err);
       });
     });
 
     function mostrarEstadisticas(anioFiltro) {
-      const datos = anioFiltro
-        ? todosLosDatos.filter(d => String(d.Año) === String(anioFiltro))
+      var datos = anioFiltro
+        ? todosLosDatos.filter(function(d) { return String(d.anio) === String(anioFiltro); })
         : todosLosDatos;
 
-      const conteoEdad = {};
-      const conteoTanda = { Primera: 0, Segunda: 0 };
-      const conteoBrazalete = { Sí: 0, No: 0 };
-      const total = datos.length;
+      var conteoEdad = {};
+      var conteoTanda = { primera: 0, segunda: 0 };
+      var conteoBrazalete = { si: 0, no: 0 };
+      var total = datos.length;
 
-      datos.forEach(d => {
-        const edad = d.Edad ?? "Sin edad";
+      datos.forEach(function(d) {
+        // Conteo por edad
+        var edad = (d.edad !== undefined && d.edad !== null) ? d.edad : "Sin edad";
         conteoEdad[edad] = (conteoEdad[edad] || 0) + 1;
-        if (d.Tanda === "Primera") conteoTanda.Primera++;
-        else if (d.Tanda === "Segunda") conteoTanda.Segunda++;
-        if (d["Tiene brazalete"] === "Sí") conteoBrazalete.Sí++;
-        else conteoBrazalete.No++;
+
+        // Conteo por tanda (normalizado a minusculas)
+        var tanda = d.tanda ? d.tanda.toLowerCase() : "";
+        if (tanda === "primera") conteoTanda.primera++;
+        else if (tanda === "segunda") conteoTanda.segunda++;
+
+        // Conteo por brazalete (normalizado a minusculas)
+        var brazalete = d.tieneBrazalete ? d.tieneBrazalete.toLowerCase() : "no";
+        if (brazalete === "si") conteoBrazalete.si++;
+        else conteoBrazalete.no++;
       });
 
-      const edadesOrdenadas = Object.keys(conteoEdad).sort((a, b) => Number(a) - Number(b));
-      const titulo = anioFiltro ? `Campamento ${anioFiltro}` : "Todos los campamentos";
+      var edadesOrdenadas = Object.keys(conteoEdad).sort(function(a, b) { return Number(a) - Number(b); });
+      var titulo = anioFiltro ? "Campamento " + anioFiltro : "Todos los campamentos";
 
-      document.getElementById("reporte").innerHTML = `
-        <h5 class="text-info mb-3">${titulo}</h5>
-        <div class="row g-3 mb-4">
-          <div class="col-md-4">
-            <div class="card bg-secondary text-white text-center p-3">
-              <h1 class="mb-0">${total}</h1>
-              <small>Total de niños</small>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card bg-secondary text-white text-center p-3">
-              <h1 class="mb-0">${conteoTanda.Primera}</h1>
-              <small>Primera tanda</small>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card bg-secondary text-white text-center p-3">
-              <h1 class="mb-0">${conteoTanda.Segunda}</h1>
-              <small>Segunda tanda</small>
-            </div>
-          </div>
-        </div>
-        <h5>Distribución por Edad</h5>
-        <ul class="list-group mb-4">
-          ${edadesOrdenadas.map(edad => `
-            <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center">
-              ${edad === "Sin edad" ? "Sin edad registrada" : `${edad} año(s)`}
-              <span class="badge bg-primary">${conteoEdad[edad]}</span>
-            </li>
-          `).join("")}
-        </ul>
-        <h5>Brazalete</h5>
-        <ul class="list-group">
-          <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center">
-            Con brazalete <span class="badge bg-success">${conteoBrazalete.Sí}</span>
-          </li>
-          <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center">
-            Sin brazalete <span class="badge bg-secondary">${conteoBrazalete.No}</span>
-          </li>
-        </ul>
-      `;
+      var filasEdad = edadesOrdenadas.map(function(edad) {
+        var etiqueta = edad === "Sin edad" ? "Sin edad registrada" : edad + " anio(s)";
+        return "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
+          etiqueta +
+          "<span class='badge bg-primary'>" + conteoEdad[edad] + "</span></li>";
+      }).join("");
+
+      document.getElementById("reporte").innerHTML =
+        "<h5 class='text-info mb-3'>" + titulo + "</h5>" +
+        "<div class='row g-3 mb-4'>" +
+          "<div class='col-md-4'>" +
+            "<div class='card bg-secondary text-white text-center p-3'>" +
+              "<h1 class='mb-0'>" + total + "</h1>" +
+              "<small>Total de ninos</small>" +
+            "</div>" +
+          "</div>" +
+          "<div class='col-md-4'>" +
+            "<div class='card bg-secondary text-white text-center p-3'>" +
+              "<h1 class='mb-0'>" + conteoTanda.primera + "</h1>" +
+              "<small>Primera tanda</small>" +
+            "</div>" +
+          "</div>" +
+          "<div class='col-md-4'>" +
+            "<div class='card bg-secondary text-white text-center p-3'>" +
+              "<h1 class='mb-0'>" + conteoTanda.segunda + "</h1>" +
+              "<small>Segunda tanda</small>" +
+            "</div>" +
+          "</div>" +
+        "</div>" +
+        "<h5>Distribucion por Edad</h5>" +
+        "<ul class='list-group mb-4'>" + filasEdad + "</ul>" +
+        "<h5>Brazalete</h5>" +
+        "<ul class='list-group'>" +
+          "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
+            "Con brazalete <span class='badge bg-success'>" + conteoBrazalete.si + "</span>" +
+          "</li>" +
+          "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
+            "Sin brazalete <span class='badge bg-secondary'>" + conteoBrazalete.no + "</span>" +
+          "</li>" +
+        "</ul>";
     }
   </script>
-<footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; font-size: 0.9em; color: #555;">
-    <p>
-      © Mario Feliz. Todos los derechos reservados. El uso no autorizado de este sistema o su contenido sin el consentimiento del autor 
-      puede ser considerado una violación legal y está sujeto a sanciones. Para consultas o permisos, contactar al 
-      <strong>809-208-3789</strong> o por correo a <strong>marioremitente@gmail.com</strong>.
-    </p>
-  </footer>
+
+  
 </body>
 </html>

@@ -18,25 +18,25 @@
 </head>
 <body class="text-light d-flex flex-column align-items-center justify-content-center min-vh-100">
   <div class="card p-4 shadow" style="width: 100%; max-width: 420px;">
-    <h2 class="text-center mb-1">Campamento EBDV</h2>
-    <p class="text-center text-secondary mb-4">Ingreso de Líder / Maestro</p>
+    <h2 class="text-center mb-1 text-warning">Campamento EBDV</h2>
+    <p class="text-center text-secondary mb-4 text-warning">Ingreso de Lider / Maestro</p>
 
     <div id="errorMsg" class="alert alert-danger" style="display:none;"></div>
 
     <form id="formularioLogin">
       <div class="mb-3">
-        <label class="form-label">Correo electrónico</label>
+        <label class="form-label" style="color: #ffd700;">Correo electronico</label>
         <input type="email" id="email" class="form-control bg-dark text-light border-secondary" placeholder="correo@ejemplo.com" required>
       </div>
       <div class="mb-3">
-        <label class="form-label">Contraseña</label>
-        <input type="password" id="password" class="form-control bg-dark text-light border-secondary" placeholder="••••••••" required>
+        <label class="form-label" style="color: #ffd700;">Contrasena</label>
+        <input type="password" id="password" class="form-control bg-dark text-light border-secondary" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" required>
       </div>
       <button type="submit" id="btnLogin" class="btn btn-primary w-100">Ingresar</button>
     </form>
 
     <p class="text-center text-secondary mt-3 mb-0" style="font-size: 0.85rem;">
-      ¿Sin cuenta? Contacta al administrador.
+      Sin cuenta? Contacta al administrador.
     </p>
   </div>
 
@@ -49,19 +49,19 @@
 
     document.getElementById("formularioLogin").addEventListener("submit", function(e) {
       e.preventDefault();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const btn = document.getElementById("btnLogin");
-      const errorMsg = document.getElementById("errorMsg");
+      var email = document.getElementById("email").value.trim();
+      var password = document.getElementById("password").value.trim();
+      var btn = document.getElementById("btnLogin");
+      var errorMsg = document.getElementById("errorMsg");
 
       btn.disabled = true;
       btn.textContent = "Ingresando...";
       errorMsg.style.display = "none";
 
       auth.signInWithEmailAndPassword(email, password)
-        .then(() => window.location.href = "consulta.html")
-        .catch(() => {
-          errorMsg.textContent = "Correo o contraseña incorrectos.";
+        .then(function() { window.location.href = "consulta.html"; })
+        .catch(function() {
+          errorMsg.textContent = "Correo o contrasena incorrectos.";
           errorMsg.style.display = "block";
           btn.disabled = false;
           btn.textContent = "Ingresar";
@@ -69,13 +69,13 @@
     });
   </script>
 
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js')
-    .then(() => console.log('SW registrado'))
-    .catch(err => console.log('Error SW', err));
-}
-</script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(function() { console.log('SW registrado'); })
+        .catch(function(err) { console.log('Error SW', err); });
+    }
+  </script>
 
 </body>
 </html>
