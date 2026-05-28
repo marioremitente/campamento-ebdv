@@ -1,34 +1,34 @@
 // funciones-personalizadas.js
-// Requiere que firebase-init.js este cargado antes
+// Requiere que firebase-init.js esté cargado antes
 
-// === PROTECCION DE RUTAS ===
-// Redirige a login.html si no hay sesion activa
+// === PROTECCIÓN DE RUTAS ===
+// Redirige a login.html si no hay sesión activa
 firebase.auth().onAuthStateChanged(function(user) {
   if (!user) {
     window.location.href = "login.html";
   }
 });
 
-// === AGREGAR HISTORIAL DE EDICION ===
+// === AGREGAR HISTORIAL DE EDICIÓN ===
 function agregarHistorialEdicion(nuevosDatos, datosAnteriores, idDocumento) {
-  var historialRef = db.collection("historial_ediciones");
-  for (var campo in nuevosDatos) {
+  const historialRef = db.collection("historial_ediciones");
+  for (const campo in nuevosDatos) {
     if (nuevosDatos[campo] !== datosAnteriores[campo]) {
       historialRef.add({
         campo: campo,
-        antes: datosAnteriores[campo] !== undefined ? datosAnteriores[campo] : "",
+        antes: datosAnteriores[campo] ?? "",
         despues: nuevosDatos[campo],
-        editadoPor: firebase.auth().currentUser ? firebase.auth().currentUser.email : "desconocido",
+        editadoPor: firebase.auth().currentUser?.email || "desconocido",
         editadoEn: firebase.firestore.Timestamp.now(),
         idDocumento: idDocumento
-      }).catch(function(err) { console.error("Error al guardar historial:", err); });
+      }).catch(err => console.error("Error al guardar historial:", err));
     }
   }
 }
 
 // === MOSTRAR HISTORIAL EN historial.html ===
 function mostrarHistorial() {
-  var tabla = document.getElementById("contenidoHistorial");
+  const tabla = document.getElementById("contenidoHistorial");
   if (!tabla) return;
 
   tabla.innerHTML = "<tr><td colspan='6' class='text-center'>Cargando...</td></tr>";
@@ -36,7 +36,7 @@ function mostrarHistorial() {
   db.collection("historial_ediciones")
     .orderBy("editadoEn", "desc")
     .get()
-    .then(function(snapshot) {
+    .then(snapshot => {
       tabla.innerHTML = "";
 
       if (snapshot.empty) {
@@ -44,68 +44,69 @@ function mostrarHistorial() {
         return;
       }
 
-      snapshot.forEach(function(doc) {
-        var d = doc.data();
-        var fecha = (d.editadoEn && d.editadoEn.toDate)
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        const fecha = d.editadoEn?.toDate
           ? d.editadoEn.toDate().toLocaleString("es-DO")
           : "Sin fecha";
 
-        var fila = document.createElement("tr");
-        fila.innerHTML =
-          "<td>" + (d.idDocumento || "-") + "</td>" +
-          "<td>" + (d.campo || "-") + "</td>" +
-          "<td>" + (d.antes || "-") + "</td>" +
-          "<td>" + (d.despues || "-") + "</td>" +
-          "<td>" + (d.editadoPor || "-") + "</td>" +
-          "<td>" + fecha + "</td>";
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+          <td>${d.idDocumento || "-"}</td>
+          <td>${d.campo || "-"}</td>
+          <td>${d.antes || "-"}</td>
+          <td>${d.despues || "-"}</td>
+          <td>${d.editadoPor || "-"}</td>
+          <td>${fecha}</td>
+        `;
         tabla.appendChild(fila);
       });
     })
-    .catch(function(err) {
+    .catch(err => {
       console.error("Error al cargar historial:", err);
       tabla.innerHTML = "<tr><td colspan='6' class='text-center text-danger'>Error al cargar historial.</td></tr>";
     });
 }
 
-// === RESPALDO AUTOMATICO AL CREAR UN REGISTRO ===
-// Usa la coleccion "ninos" (sin tilde ni enie)
+// === RESPALDO AUTOMÁTICO AL CREAR UN REGISTRO ===
 function guardarConRespaldo(nuevoRegistro) {
-  return db.collection("ninos")
+  return db.collection("niños")
     .add(nuevoRegistro)
-    .then(function(docRef) {
-      var respaldo = Object.assign({}, nuevoRegistro, {
+    .then(docRef => {
+      return db.collection("respaldo_niños").add({
+        ...nuevoRegistro,
         originalId: docRef.id,
         copiadoEn: firebase.firestore.Timestamp.now(),
-        copiaDe: "ninos"
+        copiaDe: "niños"
       });
-      return db.collection("respaldo_ninos").add(respaldo);
     });
 }
 
 // === RESPALDO MANUAL DE TODOS LOS REGISTROS ===
-// Usa la coleccion "ninos" (sin tilde ni enie)
 function respaldarTodo() {
-  db.collection("ninos").get().then(function(snapshot) {
-    var promesas = [];
-    snapshot.forEach(function(doc) {
-      var respaldo = Object.assign({}, doc.data(), {
-        originalId: doc.id,
-        copiadoEn: firebase.firestore.Timestamp.now()
-      });
-      promesas.push(db.collection("respaldo_ninos").add(respaldo));
+  db.collection("niños").get().then(snapshot => {
+    const promesas = [];
+    snapshot.forEach(doc => {
+      promesas.push(
+        db.collection("respaldo_niños").add({
+          ...doc.data(),
+          originalId: doc.id,
+          copiadoEn: firebase.firestore.Timestamp.now()
+        })
+      );
     });
     return Promise.all(promesas);
   })
-  .then(function() { alert("Respaldo completo realizado."); })
-  .catch(function(err) {
+  .then(() => alert("Respaldo completo realizado."))
+  .catch(err => {
     console.error("Error en respaldo:", err);
     alert("Error al hacer respaldo.");
   });
 }
 
-// === CERRAR SESION ===
+// === CERRAR SESIÓN ===
 function cerrarSesion() {
-  firebase.auth().signOut().then(function() {
+  firebase.auth().signOut().then(() => {
     window.location.href = "login.html";
   });
 }

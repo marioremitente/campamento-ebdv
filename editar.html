@@ -14,7 +14,7 @@
 <body class="bg-dark text-light p-4">
   <div class="container" style="max-width: 700px;">
     <h2 class="mb-1">Editar Registro</h2>
-    <p class="text-secondary mb-4">Modifica los datos del nino registrado.</p>
+    <p class="text-secondary mb-4">Modifica los datos del niño registrado.</p>
 
     <div id="cargando" class="text-secondary mb-3">Cargando datos...</div>
 
@@ -32,7 +32,7 @@
         <input type="number" id="edad" class="form-control bg-secondary text-light border-0" min="1" max="18" required>
       </div>
       <div class="col-md-8">
-        <label class="form-label">Quien lo trajo?</label>
+        <label class="form-label">¿Quién lo trajo?</label>
         <input type="text" id="responsable" class="form-control bg-secondary text-light border-0" required>
       </div>
       <div class="col-md-6">
@@ -44,10 +44,10 @@
         </select>
       </div>
       <div class="col-md-6">
-        <label class="form-label">Tiene brazalete?</label>
+        <label class="form-label">¿Tiene brazalete?</label>
         <select id="brazalete" class="form-select bg-secondary text-light border-0" required>
           <option value="">Seleccionar</option>
-          <option value="Si">Si</option>
+          <option value="Sí">Sí</option>
           <option value="No">No</option>
         </select>
       </div>
@@ -63,32 +63,29 @@
   <script src="footer.js"></script>
 
   <script>
-    var id = localStorage.getItem("registroEditarId");
-    var datosOriginales = {};
+    const id = localStorage.getItem("registroEditarId");
+    let datosOriginales = {};
 
     auth.onAuthStateChanged(function(user) {
       if (!user) { window.location.href = "login.html"; return; }
-      if (!id) { alert("No se encontro el ID del registro."); window.location.href = "consulta.html"; return; }
+      if (!id) { alert("No se encontró el ID del registro."); window.location.href = "consulta.html"; return; }
 
-      db.collection("ninos").doc(id).get().then(function(doc) {
+      db.collection("niños").doc(id).get().then(doc => {
         if (!doc.exists) { alert("Registro no encontrado."); window.location.href = "consulta.html"; return; }
 
-        var data = doc.data();
-        datosOriginales = Object.assign({}, data);
+        const data = doc.data();
+        datosOriginales = { ...data };
 
-        document.getElementById("nombre").value    = data.Nombre || "";
-        document.getElementById("apellido").value  = data.Apellido || "";
-        document.getElementById("edad").value      = data.Edad || "";
-        // Compatibilidad con campo antiguo "Quien lo trajo" y nuevo "quien_lo_trajo"
-        document.getElementById("responsable").value = data["Quién lo trajo"] || data["quien_lo_trajo"] || "";
-        document.getElementById("tanda").value     = data.tanda || "";
-        // Normalizar "Si" con o sin acento
-        var brazalete = data["Tiene brazalete"] || "";
-        document.getElementById("brazalete").value = (brazalete === "S\u00ed") ? "Si" : brazalete;
+        document.getElementById("nombre").value = data.Nombre || "";
+        document.getElementById("apellido").value = data.Apellido || "";
+        document.getElementById("edad").value = data.Edad || "";
+        document.getElementById("responsable").value = data["Quién lo trajo"] || "";
+        document.getElementById("tanda").value = data.Tanda || "";
+        document.getElementById("brazalete").value = data["Tiene brazalete"] || "";
 
-        document.getElementById("cargando").style.display   = "none";
+        document.getElementById("cargando").style.display = "none";
         document.getElementById("formEditar").style.display = "flex";
-      }).catch(function(err) {
+      }).catch(err => {
         document.getElementById("cargando").textContent = "Error al cargar datos.";
         console.error(err);
       });
@@ -97,66 +94,57 @@
     document.getElementById("formEditar").addEventListener("submit", function(e) {
       e.preventDefault();
 
-      var btn     = document.getElementById("btnGuardar");
-      var errorEl = document.getElementById("mensajeError");
-      btn.disabled    = true;
+      const btn = document.getElementById("btnGuardar");
+      const errorEl = document.getElementById("mensajeError");
+      btn.disabled = true;
       btn.textContent = "Guardando...";
       errorEl.style.display = "none";
 
-      var nuevosDatos = {
-        Nombre:            document.getElementById("nombre").value.trim(),
-        Apellido:          document.getElementById("apellido").value.trim(),
-        Edad:              parseInt(document.getElementById("edad").value.trim(), 10),
-        "quien_lo_trajo":  document.getElementById("responsable").value.trim(),
-        tanda:             document.getElementById("tanda").value,
+      const nuevosDatos = {
+        Nombre: document.getElementById("nombre").value.trim(),
+        Apellido: document.getElementById("apellido").value.trim(),
+        Edad: parseInt(document.getElementById("edad").value.trim(), 10),
+        "Quién lo trajo": document.getElementById("responsable").value.trim(),
+        Tanda: document.getElementById("tanda").value,
         "Tiene brazalete": document.getElementById("brazalete").value,
-        ultimaEdicion:     firebase.firestore.Timestamp.now(),
-        editadoPor:        auth.currentUser ? auth.currentUser.email : "desconocido"
+        ultimaEdicion: firebase.firestore.Timestamp.now(),
+        editadoPor: auth.currentUser?.email || "desconocido"
       };
 
-      var historialRef = db.collection("historial_ediciones");
-      // Campos a comparar usando los nombres nuevos (sin acento/tilde)
-      var camposComparar = ["Nombre", "Apellido", "Edad", "quien_lo_trajo", "tanda", "Tiene brazalete"];
-      var promesasHistorial = [];
+      const historialRef = db.collection("historial_ediciones");
+      const camposComparar = ["Nombre", "Apellido", "Edad", "Quién lo trajo", "Tanda", "Tiene brazalete"];
+      const promesasHistorial = [];
 
-      camposComparar.forEach(function(campo) {
-        // Para compatibilidad: "Quién lo trajo" (antiguo) vs "quien_lo_trajo" (nuevo)
-        var valorAntes;
-        if (campo === "quien_lo_trajo") {
-          valorAntes = datosOriginales["Quién lo trajo"] || datosOriginales["quien_lo_trajo"] || "";
-        } else if (campo === "tanda") {
-          valorAntes = datosOriginales["tanda"] || datosOriginales["Tanda"] || "";
-        } else {
-          valorAntes = datosOriginales[campo] !== undefined ? datosOriginales[campo] : "";
-        }
-        var antes   = String(valorAntes);
-        var despues = String(nuevosDatos[campo] !== undefined ? nuevosDatos[campo] : "");
-
+      camposComparar.forEach(campo => {
+        const antes = String(datosOriginales[campo] ?? "");
+        const despues = String(nuevosDatos[campo] ?? "");
         if (antes !== despues) {
           promesasHistorial.push(historialRef.add({
-            campo:      campo,
-            antes:      antes,
-            despues:    despues,
-            editadoPor: auth.currentUser ? auth.currentUser.email : "desconocido",
-            editadoEn:  firebase.firestore.Timestamp.now(),
+            campo, antes, despues,
+            editadoPor: auth.currentUser?.email || "desconocido",
+            editadoEn: firebase.firestore.Timestamp.now(),
             idDocumento: id
           }));
         }
       });
 
-      db.collection("ninos").doc(id).update(nuevosDatos)
-        .then(function() { return Promise.all(promesasHistorial); })
-        .then(function() {
-          localStorage.removeItem("registroEditarId");
-          window.location.href = "consulta.html";
-        })
-        .catch(function(err) {
-          errorEl.textContent  = "Error al guardar: " + err.message;
+      db.collection("niños").doc(id).update(nuevosDatos)
+        .then(() => Promise.all(promesasHistorial))
+        .then(() => { localStorage.removeItem("registroEditarId"); window.location.href = "consulta.html"; })
+        .catch(err => {
+          errorEl.textContent = "Error al guardar: " + err.message;
           errorEl.style.display = "block";
-          btn.disabled    = false;
+          btn.disabled = false;
           btn.textContent = "Guardar Cambios";
         });
     });
   </script>
+<footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; font-size: 0.9em; color: #555;">
+    <p>
+      © Mario Feliz. Todos los derechos reservados. El uso no autorizado de este sistema o su contenido sin el consentimiento del autor 
+      puede ser considerado una violación legal y está sujeto a sanciones. Para consultas o permisos, contactar al 
+      <strong>809-208-3789</strong> o por correo a <strong>marioremitente@gmail.com</strong>.
+    </p>
+  </footer>
 </body>
 </html>
