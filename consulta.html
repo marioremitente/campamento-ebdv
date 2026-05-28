@@ -1,54 +1,124 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Consulta de Registros</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
   <script src="firebase-init.js"></script>
 </head>
+
 <body class="bg-dark text-light p-4">
+
   <div class="container">
 
-    <div id="contenidoProtegido" style="display: none;">
+    <div id="contenidoProtegido" style="display:none;">
+
       <div class="d-flex justify-content-between align-items-center mb-4">
+
         <div>
-          <h2 class="mb-0">Consulta de Registros</h2>
-          <small class="text-secondary" id="totalRegistros"></small>
+          <h2 class="mb-0">
+            Consulta de Registros
+          </h2>
+
+          <small
+            class="text-secondary"
+            id="totalRegistros">
+          </small>
         </div>
-        <button class="btn btn-outline-danger btn-sm" onclick="cerrarSesion()">Cerrar sesion</button>
+
+        <button
+          class="btn btn-outline-danger btn-sm"
+          onclick="cerrarSesion()">
+
+          Cerrar sesion
+
+        </button>
+
       </div>
 
-      <!-- Filtros -->
+      <!-- FILTROS -->
       <div class="row mb-3 g-2">
+
         <div class="col-md-4">
-          <input type="text" id="busqueda" class="form-control bg-secondary text-light border-0" placeholder="Buscar por nombre o apellido">
+
+          <input
+            type="text"
+            id="busqueda"
+            class="form-control bg-secondary text-light border-0"
+            placeholder="Buscar por nombre o apellido"
+          >
+
         </div>
+
         <div class="col-md-2">
-          <input type="number" id="busquedaEdad" class="form-control bg-secondary text-light border-0" placeholder="Edad">
+
+          <input
+            type="number"
+            id="busquedaEdad"
+            class="form-control bg-secondary text-light border-0"
+            placeholder="Edad"
+          >
+
         </div>
+
         <div class="col-md-3">
-          <select id="busquedaTanda" class="form-select bg-secondary text-light border-0">
-            <option value="">Todas las tandas</option>
-            <option value="Primera">Primera</option>
-            <option value="Segunda">Segunda</option>
+
+          <select
+            id="busquedaTanda"
+            class="form-select bg-secondary text-light border-0">
+
+            <option value="">
+              Todas las tandas
+            </option>
+
+            <option value="primera">
+              Primera
+            </option>
+
+            <option value="segunda">
+              Segunda
+            </option>
+
           </select>
+
         </div>
+
         <div class="col-md-3">
-          <select id="busquedaAnio" class="form-select bg-secondary text-light border-0">
-            <option value="">Seleccionar anio</option>
+
+          <select
+            id="busquedaAnio"
+            class="form-select bg-secondary text-light border-0">
+
+            <option value="">
+              Seleccionar anio
+            </option>
+
           </select>
+
         </div>
+
       </div>
 
+      <!-- TABLA -->
       <div class="table-responsive">
+
         <table class="table table-striped table-bordered table-dark align-middle">
+
           <thead>
+
             <tr>
+
               <th>Nombre</th>
               <th>Apellido</th>
               <th>Edad</th>
@@ -58,188 +128,619 @@
               <th>Anio</th>
               <th>Registrado por</th>
               <th>Acciones</th>
+
             </tr>
+
           </thead>
+
           <tbody id="contenidoTabla">
+
             <tr>
-              <td colspan="9" class="text-center text-secondary py-4">
-                Selecciona un anio, tanda o escribe un nombre para ver los registros.
+
+              <td colspan="9"
+                class="text-center text-secondary py-4">
+
+                Selecciona un anio,
+                tanda o escribe un nombre
+                para ver los registros.
+
               </td>
+
             </tr>
+
           </tbody>
+
         </table>
+
       </div>
 
+      <!-- BOTONES -->
       <div class="row mt-3 g-2">
+
         <div class="col-md-3">
-          <a href="index_registro.html" class="btn btn-outline-light w-100">+ Nuevo Registro</a>
+
+          <a
+            href="index_registro.html"
+            class="btn btn-outline-light w-100">
+
+            + Nuevo Registro
+
+          </a>
+
         </div>
+
         <div class="col-md-3">
-          <a href="estadisticas-edad.html" class="btn btn-outline-light w-100">Estadisticas</a>
+
+          <a
+            href="estadisticas-edad.html"
+            class="btn btn-outline-light w-100">
+
+            Estadisticas
+
+          </a>
+
         </div>
+
         <div class="col-md-3">
-          <a href="historial.html" class="btn btn-outline-light w-100">Historial</a>
+
+          <a
+            href="historial.html"
+            class="btn btn-outline-light w-100">
+
+            Historial
+
+          </a>
+
         </div>
+
         <div class="col-md-3">
-          <button class="btn btn-outline-warning w-100" onclick="respaldarTodo()">Respaldar Todo</button>
+
+          <button
+            class="btn btn-outline-warning w-100"
+            onclick="respaldarTodo()">
+
+            Respaldar Todo
+
+          </button>
+
         </div>
+
       </div>
+
     </div>
 
-    <div id="contenidoRestringido" style="display: none;">
-      <div class="alert alert-danger mt-4">Contenido protegido. Debes iniciar sesion.</div>
-      <a href="login.html" class="btn btn-primary">Ir al Login</a>
+    <!-- SIN ACCESO -->
+    <div id="contenidoRestringido"
+      style="display:none;">
+
+      <div class="alert alert-danger mt-4">
+
+        Contenido protegido.
+        Debes iniciar sesion.
+
+      </div>
+
+      <a href="login.html"
+        class="btn btn-primary">
+
+        Ir al Login
+
+      </a>
+
     </div>
+
   </div>
 
-  <script src="footer.js"></script>
-
   <script>
+
+    // =========================
+    // CERRAR SESION
+    // =========================
     function cerrarSesion() {
-      auth.signOut().then(() => window.location.href = "login.html");
-    }
 
-    function respaldarTodo() {
-      db.collection("ninos").get().then(function(snapshot) {
-        var promesas = [];
-        snapshot.forEach(function(doc) {
-          promesas.push(db.collection("respaldo_ninos").add(
-            Object.assign({}, doc.data(), {
-              originalId: doc.id,
-              copiadoEn: firebase.firestore.Timestamp.now()
-            })
-          ));
+      auth.signOut()
+        .then(() => {
+
+          window.location.href =
+            "login.html";
+
         });
-        return Promise.all(promesas);
-      })
-      .then(function() { alert("Respaldo completo realizado."); })
-      .catch(function(err) { alert("Error al respaldar: " + err.message); });
     }
 
+    // =========================
+    // RESPALDO
+    // =========================
+    function respaldarTodo() {
+
+      db.collection("ninos")
+        .get()
+
+        .then(function(snapshot) {
+
+          var promesas = [];
+
+          snapshot.forEach(function(doc) {
+
+            promesas.push(
+
+              db.collection("respaldoNinos")
+                .add(
+
+                  Object.assign(
+                    {},
+                    doc.data(),
+
+                    {
+                      originalId: doc.id,
+
+                      copiadoEn:
+                        firebase.firestore.Timestamp.now()
+                    }
+
+                  )
+                )
+            );
+          });
+
+          return Promise.all(promesas);
+
+        })
+
+        .then(function() {
+
+          alert(
+            "Respaldo completo realizado."
+          );
+
+        })
+
+        .catch(function(err) {
+
+          alert(
+            "Error al respaldar: " +
+            err.message
+          );
+
+        });
+    }
+
+    // =========================
+    // LOGIN
+    // =========================
     auth.onAuthStateChanged(function(user) {
+
       if (user) {
-        document.getElementById("contenidoProtegido").style.display = "block";
-        document.getElementById("contenidoRestringido").style.display = "none";
+
+        document.getElementById(
+          "contenidoProtegido"
+        ).style.display = "block";
+
+        document.getElementById(
+          "contenidoRestringido"
+        ).style.display = "none";
+
         iniciarTabla();
-      } else {
-        document.getElementById("contenidoProtegido").style.display = "none";
-        document.getElementById("contenidoRestringido").style.display = "block";
+
+      }
+
+      else {
+
+        document.getElementById(
+          "contenidoProtegido"
+        ).style.display = "none";
+
+        document.getElementById(
+          "contenidoRestringido"
+        ).style.display = "block";
       }
     });
 
+    // =========================
+    // FILTROS ACTIVOS
+    // =========================
     function hayFiltroActivo() {
-      var texto = document.getElementById("busqueda").value.trim();
-      var edad  = document.getElementById("busquedaEdad").value.trim();
-      var tanda = document.getElementById("busquedaTanda").value;
-      var anio  = document.getElementById("busquedaAnio").value;
-      return texto !== "" || edad !== "" || tanda !== "" || anio !== "";
+
+      var texto =
+        document.getElementById("busqueda")
+          .value
+          .trim();
+
+      var edad =
+        document.getElementById("busquedaEdad")
+          .value
+          .trim();
+
+      var tanda =
+        document.getElementById("busquedaTanda")
+          .value;
+
+      var anio =
+        document.getElementById("busquedaAnio")
+          .value;
+
+      return (
+        texto !== "" ||
+        edad !== "" ||
+        tanda !== "" ||
+        anio !== ""
+      );
     }
 
+    // =========================
+    // TABLA
+    // =========================
     function iniciarTabla() {
-      var inputNombre = document.getElementById("busqueda");
-      var inputEdad   = document.getElementById("busquedaEdad");
-      var inputTanda  = document.getElementById("busquedaTanda");
-      var inputAnio   = document.getElementById("busquedaAnio");
 
-      // Cargar anios disponibles desde el campo "anio"
-      db.collection("ninos").get().then(function(snapshot) {
-        var aniosSet = new Set();
-        snapshot.forEach(function(doc) {
-          var a = doc.data().anio;
-          if (a) aniosSet.add(a);
+      var inputNombre =
+        document.getElementById("busqueda");
+
+      var inputEdad =
+        document.getElementById("busquedaEdad");
+
+      var inputTanda =
+        document.getElementById("busquedaTanda");
+
+      var inputAnio =
+        document.getElementById("busquedaAnio");
+
+      // =========================
+      // CARGAR ANIOS
+      // =========================
+      db.collection("ninos")
+        .get()
+
+        .then(function(snapshot) {
+
+          var aniosSet = new Set();
+
+          snapshot.forEach(function(doc) {
+
+            var a = doc.data().anio;
+
+            if (a) {
+              aniosSet.add(a);
+            }
+
+          });
+
+          var select =
+            document.getElementById(
+              "busquedaAnio"
+            );
+
+          Array.from(aniosSet)
+
+            .sort(function(a, b) {
+              return b - a;
+            })
+
+            .forEach(function(a) {
+
+              var opt =
+                document.createElement("option");
+
+              opt.value = a;
+
+              opt.textContent = a;
+
+              select.appendChild(opt);
+
+            });
         });
 
-        var select = document.getElementById("busquedaAnio");
-        Array.from(aniosSet).sort(function(a, b) { return b - a; }).forEach(function(a) {
-          var opt = document.createElement("option");
-          opt.value = a;
-          opt.textContent = a;
-          select.appendChild(opt);
-        });
-      });
-
+      // =========================
+      // CARGAR DATOS
+      // =========================
       function cargar() {
-        var tabla   = document.getElementById("contenidoTabla");
-        var totalEl = document.getElementById("totalRegistros");
+
+        var tabla =
+          document.getElementById(
+            "contenidoTabla"
+          );
+
+        var totalEl =
+          document.getElementById(
+            "totalRegistros"
+          );
 
         if (!hayFiltroActivo()) {
+
           tabla.innerHTML =
-            "<tr><td colspan='9' class='text-center text-secondary py-4'>" +
+
+            "<tr>" +
+
+            "<td colspan='9' class='text-center text-secondary py-4'>" +
+
             "Selecciona un anio, tanda o escribe un nombre para ver los registros." +
-            "</td></tr>";
+
+            "</td>" +
+
+            "</tr>";
+
           totalEl.textContent = "";
+
           return;
         }
 
-        var texto       = document.getElementById("busqueda").value.toLowerCase().trim();
-        var edadFiltro  = document.getElementById("busquedaEdad").value.trim();
-        var tandaFiltro = document.getElementById("busquedaTanda").value;
-        var anioFiltro  = document.getElementById("busquedaAnio").value;
+        var texto =
+          document.getElementById("busqueda")
+            .value
+            .toLowerCase()
+            .trim();
 
-        tabla.innerHTML = "<tr><td colspan='9' class='text-center'>Cargando...</td></tr>";
+        var edadFiltro =
+          document.getElementById("busquedaEdad")
+            .value
+            .trim();
 
-        // Construir query con filtros Firestore cuando sea posible
-        var query = db.collection("ninos");
-        if (anioFiltro) query = query.where("anio", "==", parseInt(anioFiltro));
-        if (tandaFiltro) query = query.where("tanda", "==", tandaFiltro);
+        var tandaFiltro =
+          document.getElementById("busquedaTanda")
+            .value;
 
-        query.get().then(function(snapshot) {
-          tabla.innerHTML = "";
-          var count = 0;
+        var anioFiltro =
+          document.getElementById("busquedaAnio")
+            .value;
 
-          snapshot.forEach(function(doc) {
-            var d = doc.data();
-            var nombreCompleto = ((d.Nombre || "") + " " + (d.Apellido || "")).toLowerCase();
-            var coincideNombre = !texto || nombreCompleto.includes(texto);
-            var coincideEdad   = !edadFiltro || String(d.Edad) === edadFiltro;
+        tabla.innerHTML =
 
-            if (coincideNombre && coincideEdad) {
-              count++;
-              var fila = document.createElement("tr");
-              var tieneBrazalete = d["Tiene brazalete"] === "Si" || d["Tiene brazalete"] === "S\u00ed";
-              fila.innerHTML =
-                "<td>" + (d.Nombre || "-") + "</td>" +
-                "<td>" + (d.Apellido || "-") + "</td>" +
-                "<td>" + (d.Edad || "-") + "</td>" +
-                "<td>" + (d["Quién lo trajo"] || d["quien_lo_trajo"] || "-") + "</td>" +
-                "<td>" + (d.tanda || "-") + "</td>" +
-                "<td><span class='badge " + (tieneBrazalete ? "bg-success" : "bg-secondary") + "'>" +
-                  (d["Tiene brazalete"] || "-") + "</span></td>" +
-                "<td><span class='badge bg-info text-dark'>" + (d.anio || "-") + "</span></td>" +
-                "<td><small class='text-secondary'>" + (d.registradoPor || "-") + "</small></td>" +
-                "<td>" +
+          "<tr>" +
+
+          "<td colspan='9' class='text-center'>" +
+
+          "Cargando..." +
+
+          "</td>" +
+
+          "</tr>";
+
+        // =========================
+        // QUERY FIRESTORE
+        // =========================
+        var query =
+          db.collection("ninos");
+
+        if (anioFiltro) {
+
+          query =
+            query.where(
+              "anio",
+              "==",
+              parseInt(anioFiltro)
+            );
+        }
+
+        if (tandaFiltro) {
+
+          query =
+            query.where(
+              "tanda",
+              "==",
+              tandaFiltro
+            );
+        }
+
+        query.get()
+
+          .then(function(snapshot) {
+
+            tabla.innerHTML = "";
+
+            var count = 0;
+
+            snapshot.forEach(function(doc) {
+
+              var d = doc.data();
+
+              var nombreCompleto =
+
+                (
+                  (d.nombre || "") +
+                  " " +
+                  (d.apellido || "")
+                )
+
+                .toLowerCase();
+
+              var coincideNombre =
+
+                !texto ||
+
+                nombreCompleto.includes(texto);
+
+              var coincideEdad =
+
+                !edadFiltro ||
+
+                String(d.edad) === edadFiltro;
+
+              if (
+                coincideNombre &&
+                coincideEdad
+              ) {
+
+                count++;
+
+                var fila =
+                  document.createElement("tr");
+
+                fila.innerHTML =
+
+                  "<td>" +
+
+                  (d.nombre || "-") +
+
+                  "</td>" +
+
+                  "<td>" +
+
+                  (d.apellido || "-") +
+
+                  "</td>" +
+
+                  "<td>" +
+
+                  (d.edad || "-") +
+
+                  "</td>" +
+
+                  "<td>" +
+
+                  (d.quienLoTrajo || "-") +
+
+                  "</td>" +
+
+                  "<td>" +
+
+                  (d.tanda || "-") +
+
+                  "</td>" +
+
+                  "<td>" +
+
+                  "<span class='badge " +
+
+                  (
+                    d.tieneBrazalete
+                      ? "bg-success"
+                      : "bg-secondary"
+                  )
+
+                  + "'>" +
+
+                  (
+                    d.tieneBrazalete
+                      ? "Si"
+                      : "No"
+                  )
+
+                  + "</span>" +
+
+                  "</td>" +
+
+                  "<td>" +
+
+                  "<span class='badge bg-info text-dark'>" +
+
+                  (d.anio || "-") +
+
+                  "</span>" +
+
+                  "</td>" +
+
+                  "<td>" +
+
+                  "<small class='text-secondary'>" +
+
+                  (d.registradoPor || "-") +
+
+                  "</small>" +
+
+                  "</td>" +
+
+                  "<td>" +
+
                   "<button class='btn btn-sm btn-warning me-1' onclick=\"editarRegistro('" + doc.id + "')\">Editar</button>" +
+
                   "<button class='btn btn-sm btn-danger' onclick=\"eliminarRegistro('" + doc.id + "')\">Eliminar</button>" +
-                "</td>";
-              tabla.appendChild(fila);
+
+                  "</td>";
+
+                tabla.appendChild(fila);
+              }
+
+            });
+
+            if (count === 0) {
+
+              tabla.innerHTML =
+
+                "<tr>" +
+
+                "<td colspan='9' class='text-center text-secondary'>" +
+
+                "No se encontraron registros." +
+
+                "</td>" +
+
+                "</tr>";
             }
+
+            totalEl.textContent =
+
+              count +
+              " registro(s) encontrado(s)";
           });
-
-          if (count === 0) {
-            tabla.innerHTML = "<tr><td colspan='9' class='text-center text-secondary'>No se encontraron registros con esos filtros.</td></tr>";
-          }
-          totalEl.textContent = count + " registro(s) encontrado(s)";
-        });
       }
 
-      inputNombre.addEventListener("input", cargar);
-      inputEdad.addEventListener("input", cargar);
-      inputTanda.addEventListener("change", cargar);
-      inputAnio.addEventListener("change", cargar);
+      inputNombre.addEventListener(
+        "input",
+        cargar
+      );
+
+      inputEdad.addEventListener(
+        "input",
+        cargar
+      );
+
+      inputTanda.addEventListener(
+        "change",
+        cargar
+      );
+
+      inputAnio.addEventListener(
+        "change",
+        cargar
+      );
     }
 
+    // =========================
+    // ELIMINAR
+    // =========================
     function eliminarRegistro(id) {
-      if (confirm("Seguro que quieres eliminar este registro?")) {
-        db.collection("ninos").doc(id).delete()
-          .then(function() { iniciarTabla(); })
-          .catch(function(err) { alert("No se pudo eliminar: " + err.message); });
+
+      if (
+        confirm(
+          "Seguro que quieres eliminar este registro?"
+        )
+      ) {
+
+        db.collection("ninos")
+          .doc(id)
+          .delete()
+
+          .then(function() {
+
+            iniciarTabla();
+
+          })
+
+          .catch(function(err) {
+
+            alert(
+              "No se pudo eliminar: " +
+              err.message
+            );
+
+          });
       }
     }
 
+    // =========================
+    // EDITAR
+    // =========================
     function editarRegistro(id) {
-      localStorage.setItem("registroEditarId", id);
-      window.location.href = "editar.html";
+
+      localStorage.setItem(
+        "registroEditarId",
+        id
+      );
+
+      window.location.href =
+        "editar.html";
     }
+
   </script>
+
 </body>
 </html>
+```
