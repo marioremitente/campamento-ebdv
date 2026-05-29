@@ -10,9 +10,9 @@ const imagenes = [
 const imagenAleatoria =
   imagenes[Math.floor(Math.random() * imagenes.length)];
 
-document.body.style.backgroundImage = `url('${imagenAleatoria}')`;
-document.body.style.backgroundSize = "cover";
-document.body.style.backgroundPosition = "center";
-document.body.style.backgroundRepeat = "no-repeat";
-document.body.style.backgroundAttachment = "fixed";
-document.body.style.minHeight = "100vh";
+document.body.style.setProperty(
+  "background",
+  `linear-gradient(rgba(0,20,60,0.45), rgba(0,20,60,0.45)),
+   url('${imagenAleatoria}') center/cover no-repeat fixed`,
+  "important"
+);

@@ -2,17 +2,3 @@
 /* Agrega imágenes decorativas en las 4 esquinas de cada página */
 /* Los archivos de imagen deben estar en la misma carpeta que los HTML */
 
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  position: relative;
-}
-
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 20, 60, 0.35);
-  pointer-events: none;
-}
