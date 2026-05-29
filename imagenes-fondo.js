@@ -7,7 +7,6 @@ const imagenes = [
   "(6).png"
 ];
 
-// Escoge una imagen aleatoria
 const imagenAleatoria =
   imagenes[Math.floor(Math.random() * imagenes.length)];
 
