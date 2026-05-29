@@ -5,7 +5,7 @@
 
   document.addEventListener("DOMContentLoaded", function () {
 
-    document.body.style.backgroundImage = "url('1(1).PNG')";
+    document.body.style.backgroundImage = "url('1(1).png')";
     document.body.style.backgroundSize = "cover";
     document.body.style.backgroundPosition = "center center";
     document.body.style.backgroundRepeat = "no-repeat";
