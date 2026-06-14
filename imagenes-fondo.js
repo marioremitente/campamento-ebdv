@@ -4,7 +4,8 @@ const imagenes = [
   "bg3.png",
   "bg4.png",
   "bg5.png",
-  "bg6.png"
+  "bg6.png",
+  "bg9.png"
 ];
 
 const imagenAleatoria =
