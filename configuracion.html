@@ -6,14 +6,13 @@
   <title>Configuracion — Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="imagenes-fondo.css">
-
-
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="firebase-init.js"></script>
 </head>
-<body text-light p-4">
+<body class="bg-dark text-light p-4">
+
   <div class="container" style="max-width: 650px;">
 
     <div id="sinAcceso" style="display:none;">
@@ -29,7 +28,6 @@
         <h5 class="mb-3">Anio actual: <span id="anioActual" class="text-info"></span></h5>
 
         <div class="row g-3">
-          <!-- Primera tanda -->
           <div class="col-12">
             <h6 class="text-warning">Primera Tanda</h6>
           </div>
@@ -43,7 +41,6 @@
             <small class="text-secondary">Aviso cuando se alcance este numero</small>
           </div>
 
-          <!-- Segunda tanda -->
           <div class="col-12 mt-2">
             <h6 class="text-warning">Segunda Tanda</h6>
           </div>
@@ -63,7 +60,6 @@
         </div>
       </div>
 
-      <!-- Estado actual -->
       <div id="estadoActual" class="mb-4" style="display:none;">
         <h5>Estado actual del campamento</h5>
         <div id="tarjetasEstado" class="row g-3"></div>
@@ -116,7 +112,6 @@
 
     async function cargarEstado() {
       try {
-        // Consulta con filtro por anio directamente en Firestore
         const snapshot = await db.collection("ninos")
           .where("anio", "==", anio)
           .get();
@@ -124,8 +119,9 @@
         let countP1 = 0, countP2 = 0;
         snapshot.forEach(doc => {
           const d = doc.data();
-          if (d.tanda === "Primera") countP1++;
-          else if (d.tanda === "Segunda") countP2++;
+          // CORREGIDO: comparar en minusculas, consistente con como se guarda
+          if (d.tanda === "primera") countP1++;
+          else if (d.tanda === "segunda") countP2++;
         });
 
         const configDoc = await db.collection("configuracion").doc("cupos_" + anio).get();
@@ -163,7 +159,6 @@
       mensajeGuardado.style.display = "none";
       mensajeError.style.display = "none";
 
-      // Validaciones
       if (!limiteP1 || !umbralP1 || !limiteP2 || !umbralP2) {
         mensajeError.textContent = "Todos los campos son requeridos.";
         mensajeError.style.display = "block";
@@ -188,7 +183,6 @@
           actualizadoEn: firebase.firestore.Timestamp.now()
         });
 
-        // Registrar en historial
         await db.collection("historial_ediciones").add({
           campo: "Configuracion de cupos",
           antes: "-",
@@ -208,6 +202,7 @@
       }
     }
   </script>
-<script src="imagenes-fondo.js"></script>
+
+  <script src="imagenes-fondo.js"></script>
 </body>
 </html>
