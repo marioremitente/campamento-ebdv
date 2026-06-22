@@ -92,10 +92,12 @@
 
     if (!email) return;
 
-    auth.sendPasswordResetEmail(email)
-      .then(function() {
-        alert("Se ha enviado un enlace para restablecer tu contraseña.");
-      })
+   .then(function() {
+  alert(
+    "Se ha enviado un enlace para restablecer tu contraseña.\n\n" +
+    "Revisa tu bandeja de entrada y también la carpeta de Spam o Correo no deseado."
+  );
+})
       .catch(function(error) {
         alert("Error: " + error.message);
       });
