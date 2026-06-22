@@ -85,25 +85,25 @@
   </script>
 
 <script>
-  document.getElementById("olvidePassword").addEventListener("click", function(e) {
-    e.preventDefault();
+document.getElementById("olvidePassword").addEventListener("click", function(e) {
+  e.preventDefault();
 
-    var email = prompt("Introduce tu correo electrónico:");
+  var email = prompt("Introduce tu correo electrónico:");
 
-    if (!email) return;
+  if (!email) return;
 
-   .then(function() {
-  alert(
-    "Se ha enviado un enlace para restablecer tu contraseña.\n\n" +
-    "Revisa tu bandeja de entrada y también la carpeta de Spam o Correo no deseado."
-  );
-})
-      .catch(function(error) {
-        alert("Error: " + error.message);
-      });
-  });
+  auth.sendPasswordResetEmail(email)
+    .then(function() {
+      alert(
+        "Se ha enviado un enlace para restablecer tu contraseña.\n\n" +
+        "Revisa tu bandeja de entrada y también la carpeta de Spam o Correo no deseado."
+      );
+    })
+    .catch(function(error) {
+      alert("Error: " + error.message);
+    });
+});
 </script>
-
 
 </body>
 </html>
