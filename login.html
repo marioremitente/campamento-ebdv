@@ -28,8 +28,17 @@
         <label class="form-label" style="color: #ffd700;">Contrasena</label>
         <input type="password" id="password" class="form-control bg-dark text-light border-secondary" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" required>
       </div>
-      <button type="submit" id="btnLogin" class="btn btn-primary w-100 mb-2">Ingresar</button>
-      <a href="estadisticas-publica.html" class="btn btn-warning w-100">Invitado</a>
+   
+<button type="submit" id="btnLogin" class="btn btn-primary w-100 mb-2">Ingresar</button>
+
+<div class="text-center mb-2">
+  <a href="#" id="olvidePassword" class="text-warning text-decoration-none">
+    ¿Olvidaste tu contraseña?
+  </a>
+</div>
+
+<a href="estadisticas-publica.html" class="btn btn-warning w-100">Invitado</a>
+
     </form>
     <p class="text-center text-secondary mt-3 mb-0" style="font-size: 0.85rem;">
       Sin cuenta? Contacta al administrador.
@@ -74,5 +83,25 @@
     document.body.style.backgroundRepeat = "no-repeat";
     document.body.style.backgroundAttachment = "fixed";
   </script>
+
+<script>
+  document.getElementById("olvidePassword").addEventListener("click", function(e) {
+    e.preventDefault();
+
+    var email = prompt("Introduce tu correo electrónico:");
+
+    if (!email) return;
+
+    auth.sendPasswordResetEmail(email)
+      .then(function() {
+        alert("Se ha enviado un enlace para restablecer tu contraseña.");
+      })
+      .catch(function(error) {
+        alert("Error: " + error.message);
+      });
+  });
+</script>
+
+
 </body>
 </html>
