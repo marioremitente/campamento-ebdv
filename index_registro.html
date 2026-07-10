@@ -13,53 +13,53 @@
 </head>
 
 <body class="bg-dark text-light p-4">
-
   <div class="container" style="max-width:700px;">
 
     <h2 class="mb-1">Registro de Ninos</h2>
+    <p class="text-secondary mb-3">Campamento EBDV — <span id="anioActual"></span></p>
 
-    <p class="text-secondary mb-3">
-      Campamento EBDV — <span id="anioActual"></span>
-    </p>
+    <!-- ESTADO DE CUPOS -->
+    <div id="estadoCupos" class="alert alert-info mb-3">Cargando cupos...</div>
 
-    <div id="estadoCupos" class="alert alert-info">
-      Cargando cupos...
+    <!-- ALERTA SEGUNDA TANDA UMBRAL -->
+    <div id="alertaSegunda" class="alert alert-warning mb-3" style="display:none;"></div>
+
+    <!-- ALERTA SEGUNDA TANDA LLENA -->
+    <div id="alertaSegundaLlena" class="alert alert-danger mb-3" style="display:none;">
+      <strong>Segunda tanda LLENA.</strong> No se pueden inscribir mas ninos.
     </div>
 
     <div id="mensajeExito" class="alert alert-success" style="display:none;"></div>
     <div id="mensajeError" class="alert alert-danger" style="display:none;"></div>
 
     <form id="formulario" class="row g-3">
-
       <div class="col-md-6">
         <label class="form-label">Nombre</label>
         <input type="text" id="nombre" class="form-control bg-secondary text-light border-0" required>
       </div>
-
       <div class="col-md-6">
         <label class="form-label">Apellido</label>
         <input type="text" id="apellido" class="form-control bg-secondary text-light border-0" required>
       </div>
-
       <div class="col-md-4">
         <label class="form-label">Edad</label>
-        <input type="number" id="edad" min="1" max="18" class="form-control bg-secondary text-light border-0" required>
+        <input type="number" id="edad" min="5" max="18"
+          class="form-control bg-secondary text-light border-0" required
+          onchange="verificarEdadTanda()">
       </div>
-
       <div class="col-md-8">
         <label class="form-label">Quien lo trajo</label>
         <input type="text" id="responsable" class="form-control bg-secondary text-light border-0" required>
       </div>
-
       <div class="col-md-6">
         <label class="form-label">Tanda</label>
-        <select id="tanda" class="form-select bg-secondary text-light border-0" required>
+        <select id="tanda" class="form-select bg-secondary text-light border-0" required
+          onchange="verificarEdadTanda()">
           <option value="">Seleccionar tanda</option>
-          <option value="primera">Primera</option>
-          <option value="segunda">Segunda</option>
+          <option value="primera">Primera (5 a 9 anos)</option>
+          <option value="segunda">Segunda (10 a 18 anos)</option>
         </select>
       </div>
-
       <div class="col-md-6">
         <label class="form-label">Tiene brazalete</label>
         <select id="brazalete" class="form-select bg-secondary text-light border-0" required>
@@ -72,24 +72,28 @@
       <!-- CONDICION ESPECIAL -->
       <div class="col-md-6">
         <label class="form-label">Requiere atencion especial</label>
-        <select id="requiereAtencion" class="form-select bg-secondary text-light border-0" required onchange="toggleDetalles()">
+        <select id="requiereAtencion" class="form-select bg-secondary text-light border-0" required
+          onchange="toggleDetalles()">
           <option value="">Seleccionar</option>
           <option value="no">No</option>
           <option value="si">Si</option>
         </select>
       </div>
-
       <div class="col-md-6" id="campoDetalles" style="display:none;">
         <label class="form-label">Detalles de la condicion</label>
         <textarea id="condicionEspecial" class="form-control bg-secondary text-light border-0" rows="2"
           placeholder="Ej: alergia al mani, asma, requiere medicacion..."></textarea>
       </div>
 
+      <!-- AVISO DE CUPO POR EDAD -->
+      <div class="col-12" id="avisoCupoEdad" style="display:none;">
+        <div id="textoCupoEdad" class="alert alert-danger mb-0"></div>
+      </div>
+
       <div class="col-12 d-flex gap-2">
         <button type="submit" id="btnRegistrar" class="btn btn-primary">Registrar</button>
         <a href="consulta.html" class="btn btn-outline-light">Ver Consultas</a>
       </div>
-
     </form>
   </div>
 
@@ -97,49 +101,191 @@
   <script src="imagenes-fondo.js"></script>
 
   <script>
-    const CUPOS = { primera: 225, segunda: 275 };
-    const anioActual = new Date().getFullYear();
+    // =============================================
+    // LIMITES FIJOS POR GRUPO DE EDAD
+    // =============================================
+    const LIMITE_PRIMERA = 150;   // total primera tanda
+    const LIMITE_SEGUNDA = 260;   // total segunda tanda (bloqueo)
+    const UMBRAL_SEGUNDA = 200;   // alerta segunda tanda
+    const CUPO_POR_EDAD_PRIMERA = 30;
+    const CUPO_POR_EDAD_SEGUNDA = 40;
 
+    const EDADES_PRIMERA = [5, 6, 7, 8, 9];
+    const EDADES_SEGUNDA = [10, 11, 12, 13, 14, 15, 16, 17, 18];
+
+    const anioActual = new Date().getFullYear();
     document.getElementById("anioActual").textContent = "Anio " + anioActual;
+
+    // Contadores globales cargados al inicio
+    let conteosPorEdad = {}; // { "primera_8": 12, "segunda_15": 5, ... }
+    let totalPrimera = 0;
+    let totalSegunda = 0;
 
     function toggleDetalles() {
       const val = document.getElementById("requiereAtencion").value;
-      const campo = document.getElementById("campoDetalles");
-      campo.style.display = val === "si" ? "block" : "none";
+      document.getElementById("campoDetalles").style.display = val === "si" ? "block" : "none";
       if (val !== "si") document.getElementById("condicionEspecial").value = "";
     }
 
-    auth.onAuthStateChanged(function(user) {
+    auth.onAuthStateChanged(async function(user) {
       if (!user) { window.location.href = "login.html"; return; }
-      verificarCupos();
+      await cargarConteos();
     });
 
-    async function verificarCupos() {
+    // =============================================
+    // CARGAR TODOS LOS CONTEOS DE FIRESTORE
+    // =============================================
+    async function cargarConteos() {
       const estado = document.getElementById("estadoCupos");
+      estado.textContent = "Cargando cupos...";
+      estado.className = "alert alert-info mb-3";
 
-      const snapshot = await db.collection("ninos")
-        .where("anio", "==", anioActual)
-        .get();
+      try {
+        const snapshot = await db.collection("ninos")
+          .where("anio", "==", anioActual)
+          .get();
 
-      let primeraCount = 0, segundaCount = 0;
-      snapshot.forEach(function(doc) {
-        const d = doc.data();
-        if (d.tanda === "primera") primeraCount++;
-        if (d.tanda === "segunda") segundaCount++;
-      });
+        conteosPorEdad = {};
+        totalPrimera = 0;
+        totalSegunda = 0;
 
-      estado.innerHTML =
-        "<strong>Primera tanda:</strong> " + primeraCount + "/" + CUPOS.primera +
-        " (" + (CUPOS.primera - primeraCount) + " disponibles)" +
-        "<br><br>" +
-        "<strong>Segunda tanda:</strong> " + segundaCount + "/" + CUPOS.segunda +
-        " (" + (CUPOS.segunda - segundaCount) + " disponibles)";
+        snapshot.forEach(function(doc) {
+          const d = doc.data();
+          const clave = d.tanda + "_" + d.edad;
+          conteosPorEdad[clave] = (conteosPorEdad[clave] || 0) + 1;
+          if (d.tanda === "primera") totalPrimera++;
+          if (d.tanda === "segunda") totalSegunda++;
+        });
 
-      estado.className = (primeraCount >= CUPOS.primera || segundaCount >= CUPOS.segunda)
-        ? "alert alert-danger"
-        : "alert alert-info";
+        actualizarEstadoCupos();
+        verificarEdadTanda();
+
+      } catch(err) {
+        console.error(err);
+        estado.textContent = "Error al cargar cupos.";
+        estado.className = "alert alert-danger mb-3";
+      }
     }
 
+    // =============================================
+    // MOSTRAR ESTADO GENERAL DE CUPOS
+    // =============================================
+    function actualizarEstadoCupos() {
+      const estado = document.getElementById("estadoCupos");
+      const alertaSegunda = document.getElementById("alertaSegunda");
+      const alertaSegundaLlena = document.getElementById("alertaSegundaLlena");
+
+      // Estado primera tanda
+      const disponiblesPrimera = LIMITE_PRIMERA - totalPrimera;
+      const disponiblesSegunda = LIMITE_SEGUNDA - totalSegunda;
+
+      let htmlEstado = "<strong>Primera tanda:</strong> " + totalPrimera + "/" + LIMITE_PRIMERA +
+        " (" + Math.max(0, disponiblesPrimera) + " disponibles)<br>";
+
+      // Desglose por edad primera
+      EDADES_PRIMERA.forEach(function(e) {
+        const count = conteosPorEdad["primera_" + e] || 0;
+        const llena = count >= CUPO_POR_EDAD_PRIMERA;
+        htmlEstado += "<small class='" + (llena ? "text-danger" : "text-secondary") + "'>" +
+          "&nbsp;&nbsp;" + e + " anos: " + count + "/" + CUPO_POR_EDAD_PRIMERA +
+          (llena ? " — LLENO" : "") + "</small><br>";
+      });
+
+      htmlEstado += "<br><strong>Segunda tanda:</strong> " + totalSegunda + "/" + LIMITE_SEGUNDA +
+        " (" + Math.max(0, disponiblesSegunda) + " disponibles)<br>";
+
+      // Desglose por edad segunda
+      EDADES_SEGUNDA.forEach(function(e) {
+        const count = conteosPorEdad["segunda_" + e] || 0;
+        const llena = count >= CUPO_POR_EDAD_SEGUNDA;
+        htmlEstado += "<small class='" + (llena ? "text-danger" : "text-secondary") + "'>" +
+          "&nbsp;&nbsp;" + e + " anos: " + count + "/" + CUPO_POR_EDAD_SEGUNDA +
+          (llena ? " — LLENO" : "") + "</small><br>";
+      });
+
+      // Color del estado general
+      if (totalPrimera >= LIMITE_PRIMERA && totalSegunda >= LIMITE_SEGUNDA) {
+        estado.className = "alert alert-danger mb-3";
+      } else if (totalPrimera >= LIMITE_PRIMERA || totalSegunda >= UMBRAL_SEGUNDA) {
+        estado.className = "alert alert-warning mb-3";
+      } else {
+        estado.className = "alert alert-info mb-3";
+      }
+      estado.innerHTML = htmlEstado;
+
+      // Alerta segunda tanda umbral
+      if (totalSegunda >= LIMITE_SEGUNDA) {
+        alertaSegunda.style.display = "none";
+        alertaSegundaLlena.style.display = "block";
+      } else if (totalSegunda >= UMBRAL_SEGUNDA) {
+        const restantes = LIMITE_SEGUNDA - totalSegunda;
+        alertaSegunda.style.display = "block";
+        alertaSegunda.innerHTML = "<strong>Atencion:</strong> Se llego al limite de alerta de la segunda tanda. Te quedan <strong>" + restantes + " espacios</strong> disponibles.";
+        alertaSegundaLlena.style.display = "none";
+      } else {
+        alertaSegunda.style.display = "none";
+        alertaSegundaLlena.style.display = "none";
+      }
+    }
+
+    // =============================================
+    // VERIFICAR CUPO AL CAMBIAR EDAD O TANDA
+    // =============================================
+    function verificarEdadTanda() {
+      const edad = parseInt(document.getElementById("edad").value);
+      const tanda = document.getElementById("tanda").value;
+      const avisoCupoEdad = document.getElementById("avisoCupoEdad");
+      const textoCupoEdad = document.getElementById("textoCupoEdad");
+      const btnRegistrar = document.getElementById("btnRegistrar");
+
+      avisoCupoEdad.style.display = "none";
+      btnRegistrar.disabled = false;
+
+      if (!tanda || !edad) return;
+
+      // Validar rango de edad por tanda
+      if (tanda === "primera" && !EDADES_PRIMERA.includes(edad)) {
+        avisoCupoEdad.style.display = "block";
+        textoCupoEdad.textContent = "La primera tanda es para ninos de 5 a 9 anos.";
+        btnRegistrar.disabled = true;
+        return;
+      }
+      if (tanda === "segunda" && !EDADES_SEGUNDA.includes(edad)) {
+        avisoCupoEdad.style.display = "block";
+        textoCupoEdad.textContent = "La segunda tanda es para ninos de 10 a 18 anos.";
+        btnRegistrar.disabled = true;
+        return;
+      }
+
+      // Verificar tope total de la tanda
+      if (tanda === "primera" && totalPrimera >= LIMITE_PRIMERA) {
+        avisoCupoEdad.style.display = "block";
+        textoCupoEdad.textContent = "La primera tanda ha alcanzado su limite de " + LIMITE_PRIMERA + " ninos.";
+        btnRegistrar.disabled = true;
+        return;
+      }
+      if (tanda === "segunda" && totalSegunda >= LIMITE_SEGUNDA) {
+        avisoCupoEdad.style.display = "block";
+        textoCupoEdad.textContent = "La segunda tanda ha alcanzado su limite de " + LIMITE_SEGUNDA + " ninos.";
+        btnRegistrar.disabled = true;
+        return;
+      }
+
+      // Verificar cupo por grupo de edad
+      const clave = tanda + "_" + edad;
+      const countEdad = conteosPorEdad[clave] || 0;
+      const limiteEdad = tanda === "primera" ? CUPO_POR_EDAD_PRIMERA : CUPO_POR_EDAD_SEGUNDA;
+
+      if (countEdad >= limiteEdad) {
+        avisoCupoEdad.style.display = "block";
+        textoCupoEdad.textContent = "El grupo de " + edad + " anos en la " + tanda + " tanda esta lleno (" + countEdad + "/" + limiteEdad + ").";
+        btnRegistrar.disabled = true;
+      }
+    }
+
+    // =============================================
+    // GUARDAR REGISTRO
+    // =============================================
     document.getElementById("formulario").addEventListener("submit", async function(e) {
       e.preventDefault();
 
@@ -156,25 +302,50 @@
       error.style.display = "none";
 
       const tandaValor = document.getElementById("tanda").value;
+      const edadValor = parseInt(document.getElementById("edad").value);
       const requiereAtencion = document.getElementById("requiereAtencion").value;
 
-      const snapshot = await db.collection("ninos")
-        .where("anio", "==", anioActual)
-        .where("tanda", "==", tandaValor)
-        .get();
-
-      if (snapshot.size >= CUPOS[tandaValor]) {
-        error.textContent = "La tanda seleccionada ya alcanzo el limite permitido.";
+      // Validaciones finales antes de guardar
+      if (tandaValor === "primera" && !EDADES_PRIMERA.includes(edadValor)) {
+        error.textContent = "La primera tanda es para ninos de 5 a 9 anos.";
         error.style.display = "block";
-        btn.disabled = false;
-        btn.textContent = "Registrar";
+        btn.disabled = false; btn.textContent = "Registrar";
+        return;
+      }
+      if (tandaValor === "segunda" && !EDADES_SEGUNDA.includes(edadValor)) {
+        error.textContent = "La segunda tanda es para ninos de 10 a 18 anos.";
+        error.style.display = "block";
+        btn.disabled = false; btn.textContent = "Registrar";
+        return;
+      }
+      if (tandaValor === "primera" && totalPrimera >= LIMITE_PRIMERA) {
+        error.textContent = "La primera tanda esta llena.";
+        error.style.display = "block";
+        btn.disabled = false; btn.textContent = "Registrar";
+        return;
+      }
+      if (tandaValor === "segunda" && totalSegunda >= LIMITE_SEGUNDA) {
+        error.textContent = "La segunda tanda esta llena.";
+        error.style.display = "block";
+        btn.disabled = false; btn.textContent = "Registrar";
+        return;
+      }
+
+      const clave = tandaValor + "_" + edadValor;
+      const countEdad = conteosPorEdad[clave] || 0;
+      const limiteEdad = tandaValor === "primera" ? CUPO_POR_EDAD_PRIMERA : CUPO_POR_EDAD_SEGUNDA;
+
+      if (countEdad >= limiteEdad) {
+        error.textContent = "El grupo de " + edadValor + " anos en la " + tandaValor + " tanda esta lleno.";
+        error.style.display = "block";
+        btn.disabled = false; btn.textContent = "Registrar";
         return;
       }
 
       const nuevoRegistro = {
         nombre: document.getElementById("nombre").value.trim(),
         apellido: document.getElementById("apellido").value.trim(),
-        edad: parseInt(document.getElementById("edad").value.trim()),
+        edad: edadValor,
         quienLoTrajo: document.getElementById("responsable").value.trim(),
         tanda: tandaValor,
         tieneBrazalete: document.getElementById("brazalete").value,
@@ -194,18 +365,26 @@
           tipo: "registro_nuevo",
           campo: "Nuevo registro",
           antes: "-",
-          despues: nuevoRegistro.nombre + " " + nuevoRegistro.apellido + " — " + tandaValor + " tanda" +
-            (requiereAtencion === "si" ? " atencion especial" : ""),
+          despues: nuevoRegistro.nombre + " " + nuevoRegistro.apellido +
+            " — " + tandaValor + " tanda, " + edadValor + " anos" +
+            (requiereAtencion === "si" ? " — atencion especial" : ""),
           editadoPor: user.email,
           editadoEn: firebase.firestore.Timestamp.now(),
           idDocumento: docRef.id
         });
 
+        // Actualizar contadores locales sin ir a Firestore
+        conteosPorEdad[clave] = (conteosPorEdad[clave] || 0) + 1;
+        if (tandaValor === "primera") totalPrimera++;
+        else totalSegunda++;
+
+        actualizarEstadoCupos();
+        verificarEdadTanda();
+
         exito.textContent = nuevoRegistro.nombre + " " + nuevoRegistro.apellido + " registrado correctamente.";
         exito.style.display = "block";
         e.target.reset();
         document.getElementById("campoDetalles").style.display = "none";
-        verificarCupos();
 
       } catch(err) {
         console.error(err);
@@ -217,6 +396,5 @@
       }
     });
   </script>
-
 </body>
 </html>

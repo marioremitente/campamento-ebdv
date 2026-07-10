@@ -13,7 +13,7 @@
 </head>
 <body class="bg-dark text-light p-4">
 
-  <div class="container" style="max-width: 650px;">
+  <div class="container" style="max-width:750px;">
 
     <div id="sinAcceso" style="display:none;">
       <div class="alert alert-danger mt-5">Acceso restringido. Solo para el administrador.</div>
@@ -22,52 +22,68 @@
 
     <div id="panelAdmin" style="display:none;">
       <h2 class="mb-1">Configuracion de Cupos</h2>
-      <p class="text-secondary mb-4">Los cambios aplican al anio actual. Se reinician automaticamente cada anio.</p>
+      <p class="text-secondary mb-4">
+        Limites fijos: Primera tanda 30 por edad / 150 total — Segunda tanda 40 por edad / alerta a los 200 / bloqueo a los 260
+      </p>
 
+      <!-- ESTADO PRIMERA TANDA -->
+      <div class="card bg-secondary p-3 mb-3">
+        <h5 class="text-warning mb-3">Primera Tanda — <span id="totalP1">0</span> / 150</h5>
+        <div class="table-responsive">
+          <table class="table table-dark table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Edad</th>
+                <th>Registrados</th>
+                <th>Limite</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tablaEdadesPrimera"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ESTADO SEGUNDA TANDA -->
+      <div class="card bg-secondary p-3 mb-4">
+        <h5 class="text-warning mb-3">Segunda Tanda — <span id="totalP2">0</span> / 260 <small class="text-secondary">(alerta a los 200)</small></h5>
+        <div class="table-responsive">
+          <table class="table table-dark table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Edad</th>
+                <th>Registrados</th>
+                <th>Limite</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tablaEdadesSegunda"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- UMBRAL DE ALERTA EDITABLE -->
       <div class="card bg-secondary p-4 mb-4">
-        <h5 class="mb-3">Anio actual: <span id="anioActual" class="text-info"></span></h5>
-
+        <h5 class="mb-3">Configuracion de Alertas</h5>
+        <p class="text-secondary small">Solo puedes ajustar el umbral de alerta. Los limites por grupo son fijos.</p>
         <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Umbral alerta Primera Tanda</label>
+            <input type="number" id="umbralP1" class="form-control bg-dark text-light border-secondary" min="1" max="149" placeholder="Ej: 130">
+            <small class="text-secondary">Aviso cuando se alcance este numero (max 149)</small>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Umbral alerta Segunda Tanda</label>
+            <input type="number" id="umbralP2" class="form-control bg-dark text-light border-secondary" min="1" max="259" placeholder="Ej: 200">
+            <small class="text-secondary">Aviso cuando se alcance este numero (max 259)</small>
+          </div>
           <div class="col-12">
-            <h6 class="text-warning">Primera Tanda</h6>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Limite maximo</label>
-            <input type="number" id="limiteP1" class="form-control bg-dark text-light border-secondary" min="1" placeholder="Ej: 225">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Umbral de alerta</label>
-            <input type="number" id="umbralP1" class="form-control bg-dark text-light border-secondary" min="1" placeholder="Ej: 200">
-            <small class="text-secondary">Aviso cuando se alcance este numero</small>
-          </div>
-
-          <div class="col-12 mt-2">
-            <h6 class="text-warning">Segunda Tanda</h6>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Limite maximo</label>
-            <input type="number" id="limiteP2" class="form-control bg-dark text-light border-secondary" min="1" placeholder="Ej: 275">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Umbral de alerta</label>
-            <input type="number" id="umbralP2" class="form-control bg-dark text-light border-secondary" min="1" placeholder="Ej: 250">
-            <small class="text-secondary">Aviso cuando se alcance este numero</small>
-          </div>
-
-          <div class="col-12 mt-2">
             <button class="btn btn-success w-100" onclick="guardarConfig()">Guardar Configuracion</button>
           </div>
         </div>
       </div>
 
-      <div id="estadoActual" class="mb-4" style="display:none;">
-        <h5>Estado actual del campamento</h5>
-        <div id="tarjetasEstado" class="row g-3"></div>
-      </div>
-
-      <div id="mensajeGuardado" class="alert alert-success" style="display:none;">
-        Configuracion guardada correctamente.
-      </div>
+      <div id="mensajeGuardado" class="alert alert-success" style="display:none;">Configuracion guardada correctamente.</div>
       <div id="mensajeError" class="alert alert-danger" style="display:none;"></div>
 
       <a href="consulta.html" class="btn btn-outline-light mt-3">&#8592; Volver al panel</a>
@@ -80,17 +96,20 @@
     const ADMIN_EMAIL = "remitente2008@gmail.com";
     const anio = new Date().getFullYear();
 
+    const LIMITE_PRIMERA = 150;
+    const LIMITE_SEGUNDA = 260;
+    const CUPO_POR_EDAD_PRIMERA = 30;
+    const CUPO_POR_EDAD_SEGUNDA = 40;
+    const EDADES_PRIMERA = [5, 6, 7, 8, 9];
+    const EDADES_SEGUNDA = [10, 11, 12, 13, 14, 15, 16, 17, 18];
+
     auth.onAuthStateChanged(async function(user) {
       if (!user) { window.location.href = "login.html"; return; }
-
       if (user.email !== ADMIN_EMAIL) {
         document.getElementById("sinAcceso").style.display = "block";
         return;
       }
-
       document.getElementById("panelAdmin").style.display = "block";
-      document.getElementById("anioActual").textContent = anio;
-
       await cargarConfig();
       await cargarEstado();
     });
@@ -100,13 +119,11 @@
         const doc = await db.collection("configuracion").doc("cupos_" + anio).get();
         if (doc.exists) {
           const d = doc.data();
-          document.getElementById("limiteP1").value = d.limiteP1 || "";
           document.getElementById("umbralP1").value = d.umbralP1 || "";
-          document.getElementById("limiteP2").value = d.limiteP2 || "";
           document.getElementById("umbralP2").value = d.umbralP2 || "";
         }
       } catch(err) {
-        console.error("Error al cargar config:", err);
+        console.error(err);
       }
     }
 
@@ -116,77 +133,107 @@
           .where("anio", "==", anio)
           .get();
 
-        let countP1 = 0, countP2 = 0;
-        snapshot.forEach(doc => {
+        const conteos = {};
+        let totalP1 = 0, totalP2 = 0;
+
+        snapshot.forEach(function(doc) {
           const d = doc.data();
-          // CORREGIDO: comparar en minusculas, consistente con como se guarda
-          if (d.tanda === "primera") countP1++;
-          else if (d.tanda === "segunda") countP2++;
+          const clave = d.tanda + "_" + d.edad;
+          conteos[clave] = (conteos[clave] || 0) + 1;
+          if (d.tanda === "primera") totalP1++;
+          if (d.tanda === "segunda") totalP2++;
         });
 
-        const configDoc = await db.collection("configuracion").doc("cupos_" + anio).get();
-        const config = configDoc.exists ? configDoc.data() : {};
+        document.getElementById("totalP1").textContent = totalP1;
+        document.getElementById("totalP2").textContent = totalP2;
 
-        document.getElementById("estadoActual").style.display = "block";
-        document.getElementById("tarjetasEstado").innerHTML =
-          '<div class="col-md-6">' +
-            '<div class="card bg-dark p-3 text-center border border-secondary">' +
-              '<h6 class="text-warning">Primera Tanda</h6>' +
-              '<h2>' + countP1 + ' / ' + (config.limiteP1 || "?") + '</h2>' +
-              '<small class="text-secondary">Umbral de alerta: ' + (config.umbralP1 || "?") + '</small>' +
-            '</div>' +
-          '</div>' +
-          '<div class="col-md-6">' +
-            '<div class="card bg-dark p-3 text-center border border-secondary">' +
-              '<h6 class="text-warning">Segunda Tanda</h6>' +
-              '<h2>' + countP2 + ' / ' + (config.limiteP2 || "?") + '</h2>' +
-              '<small class="text-secondary">Umbral de alerta: ' + (config.umbralP2 || "?") + '</small>' +
-            '</div>' +
-          '</div>';
+        // Tabla primera tanda
+        const tablaP1 = document.getElementById("tablaEdadesPrimera");
+        tablaP1.innerHTML = "";
+        EDADES_PRIMERA.forEach(function(edad) {
+          const count = conteos["primera_" + edad] || 0;
+          const llena = count >= CUPO_POR_EDAD_PRIMERA;
+          const pct = Math.round((count / CUPO_POR_EDAD_PRIMERA) * 100);
+          const fila = document.createElement("tr");
+          fila.innerHTML =
+            "<td>" + edad + " anos</td>" +
+            "<td>" + count + "</td>" +
+            "<td>" + CUPO_POR_EDAD_PRIMERA + "</td>" +
+            "<td>" +
+              "<div class='progress' style='height:16px;'>" +
+                "<div class='progress-bar " + (llena ? "bg-danger" : pct >= 70 ? "bg-warning" : "bg-success") + "' style='width:" + pct + "%'>" + pct + "%</div>" +
+              "</div>" +
+              (llena ? "<small class='text-danger'>LLENO</small>" : "") +
+            "</td>";
+          tablaP1.appendChild(fila);
+        });
+
+        // Tabla segunda tanda
+        const tablaP2 = document.getElementById("tablaEdadesSegunda");
+        tablaP2.innerHTML = "";
+        EDADES_SEGUNDA.forEach(function(edad) {
+          const count = conteos["segunda_" + edad] || 0;
+          const llena = count >= CUPO_POR_EDAD_SEGUNDA;
+          const pct = Math.round((count / CUPO_POR_EDAD_SEGUNDA) * 100);
+          const fila = document.createElement("tr");
+          fila.innerHTML =
+            "<td>" + edad + " anos</td>" +
+            "<td>" + count + "</td>" +
+            "<td>" + CUPO_POR_EDAD_SEGUNDA + "</td>" +
+            "<td>" +
+              "<div class='progress' style='height:16px;'>" +
+                "<div class='progress-bar " + (llena ? "bg-danger" : pct >= 70 ? "bg-warning" : "bg-success") + "' style='width:" + pct + "%'>" + pct + "%</div>" +
+              "</div>" +
+              (llena ? "<small class='text-danger'>LLENO</small>" : "") +
+            "</td>";
+          tablaP2.appendChild(fila);
+        });
+
       } catch(err) {
-        console.error("Error al cargar estado:", err);
+        console.error(err);
       }
     }
 
     async function guardarConfig() {
-      const limiteP1 = parseInt(document.getElementById("limiteP1").value);
       const umbralP1 = parseInt(document.getElementById("umbralP1").value);
-      const limiteP2 = parseInt(document.getElementById("limiteP2").value);
       const umbralP2 = parseInt(document.getElementById("umbralP2").value);
-
       const mensajeGuardado = document.getElementById("mensajeGuardado");
       const mensajeError = document.getElementById("mensajeError");
       mensajeGuardado.style.display = "none";
       mensajeError.style.display = "none";
 
-      if (!limiteP1 || !umbralP1 || !limiteP2 || !umbralP2) {
-        mensajeError.textContent = "Todos los campos son requeridos.";
+      if (!umbralP1 || !umbralP2) {
+        mensajeError.textContent = "Ambos umbrales son requeridos.";
         mensajeError.style.display = "block";
         return;
       }
-      if (umbralP1 >= limiteP1) {
-        mensajeError.textContent = "El umbral de alerta de la 1ra tanda debe ser menor que el limite.";
+      if (umbralP1 >= LIMITE_PRIMERA) {
+        mensajeError.textContent = "El umbral de la primera tanda debe ser menor a " + LIMITE_PRIMERA + ".";
         mensajeError.style.display = "block";
         return;
       }
-      if (umbralP2 >= limiteP2) {
-        mensajeError.textContent = "El umbral de alerta de la 2da tanda debe ser menor que el limite.";
+      if (umbralP2 >= LIMITE_SEGUNDA) {
+        mensajeError.textContent = "El umbral de la segunda tanda debe ser menor a " + LIMITE_SEGUNDA + ".";
         mensajeError.style.display = "block";
         return;
       }
 
       try {
         await db.collection("configuracion").doc("cupos_" + anio).set({
-          limiteP1, umbralP1, limiteP2, umbralP2,
+          umbralP1, umbralP2,
+          limiteP1: LIMITE_PRIMERA,
+          limiteP2: LIMITE_SEGUNDA,
+          cupoPorEdadPrimera: CUPO_POR_EDAD_PRIMERA,
+          cupoPorEdadSegunda: CUPO_POR_EDAD_SEGUNDA,
           anio: anio,
           actualizadoPor: auth.currentUser.email,
           actualizadoEn: firebase.firestore.Timestamp.now()
         });
 
         await db.collection("historial_ediciones").add({
-          campo: "Configuracion de cupos",
+          campo: "Configuracion de alertas",
           antes: "-",
-          despues: "P1: limite " + limiteP1 + ", alerta " + umbralP1 + " | P2: limite " + limiteP2 + ", alerta " + umbralP2,
+          despues: "Umbral P1: " + umbralP1 + " | Umbral P2: " + umbralP2,
           editadoPor: auth.currentUser.email,
           editadoEn: firebase.firestore.Timestamp.now(),
           idDocumento: "cupos_" + anio,
@@ -194,8 +241,7 @@
         });
 
         mensajeGuardado.style.display = "block";
-        setTimeout(() => mensajeGuardado.style.display = "none", 3000);
-        await cargarEstado();
+        setTimeout(function() { mensajeGuardado.style.display = "none"; }, 3000);
       } catch(err) {
         mensajeError.textContent = "Error al guardar: " + err.message;
         mensajeError.style.display = "block";
