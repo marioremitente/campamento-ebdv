@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="imagenes-fondo.css">
-  <title>Consulta de Registros</title>
+  <title>Panel Admin — Consulta</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
@@ -14,15 +14,46 @@
 <body class="bg-dark text-light p-4">
   <div class="container">
 
-    <div id="contenidoProtegido" style="display:none;">
+    <div id="sinAcceso" style="display:none;">
+      <div class="alert alert-danger mt-5">Acceso restringido. Solo para el administrador.</div>
+      <a href="login.html" class="btn btn-outline-light">Ir al Login</a>
+    </div>
+
+    <div id="contenidoAdmin" style="display:none;">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h2 class="mb-0">Consulta de Registros</h2>
+          <h2 class="mb-0">Panel Administrador</h2>
           <small class="text-secondary" id="totalRegistros"></small>
         </div>
         <button class="btn btn-outline-danger btn-sm" onclick="cerrarSesion()">Cerrar sesion</button>
       </div>
 
+      <!-- ACCESOS RAPIDOS ADMIN -->
+      <div class="row mb-4 g-2">
+        <div class="col-md-4 col-6">
+          <a href="index_registro.html" class="btn btn-outline-light w-100">+ Nuevo Registro</a>
+        </div>
+        <div class="col-md-4 col-6">
+          <a href="estadisticas-edad.html" class="btn btn-outline-light w-100">Estadisticas</a>
+        </div>
+        <div class="col-md-4 col-6">
+          <a href="historial.html" class="btn btn-outline-light w-100">Historial</a>
+        </div>
+        <div class="col-md-4 col-6">
+          <a href="configuracion.html" class="btn btn-outline-warning w-100">Configuracion</a>
+        </div>
+        <div class="col-md-4 col-6">
+          <a href="gestion-usuarios.html" class="btn btn-outline-warning w-100">Gestion Usuarios</a>
+        </div>
+        <div class="col-md-4 col-6">
+          <a href="carga-masiva.html" class="btn btn-outline-info w-100">Carga Masiva</a>
+        </div>
+        <div class="col-md-12">
+          <button class="btn btn-outline-secondary w-100" onclick="respaldarTodo()">Respaldar Todo</button>
+        </div>
+      </div>
+
+      <!-- FILTROS -->
       <div class="row mb-3 g-2">
         <div class="col-md-3">
           <input type="text" id="busqueda" class="form-control bg-secondary text-light border-0" placeholder="Buscar por nombre o apellido">
@@ -77,21 +108,6 @@
           </tbody>
         </table>
       </div>
-
-      <!-- BOTONES USUARIO NORMAL — sin historial ni respaldo -->
-      <div class="row mt-3 g-2">
-        <div class="col-md-6">
-          <a href="index_registro.html" class="btn btn-outline-light w-100">+ Nuevo Registro</a>
-        </div>
-        <div class="col-md-6">
-          <a href="estadisticas-edad.html" class="btn btn-outline-light w-100">Estadisticas</a>
-        </div>
-      </div>
-    </div>
-
-    <div id="contenidoRestringido" style="display:none;">
-      <div class="alert alert-danger mt-4">Contenido protegido. Debes iniciar sesion.</div>
-      <a href="login.html" class="btn btn-primary">Ir al Login</a>
     </div>
   </div>
 
@@ -104,19 +120,30 @@
       auth.signOut().then(function() { window.location.href = "login.html"; });
     }
 
+    function respaldarTodo() {
+      if (!confirm("Confirmas que quieres hacer un respaldo completo?")) return;
+      db.collection("ninos").get().then(function(snapshot) {
+        var promesas = [];
+        snapshot.forEach(function(doc) {
+          promesas.push(db.collection("respaldo_ninos").add({
+            ...doc.data(),
+            originalId: doc.id,
+            copiadoEn: firebase.firestore.Timestamp.now()
+          }));
+        });
+        return Promise.all(promesas);
+      })
+      .then(function() { alert("Respaldo completo realizado correctamente."); })
+      .catch(function(err) { alert("Error al respaldar: " + err.message); });
+    }
+
     auth.onAuthStateChanged(function(user) {
-      if (!user) {
-        document.getElementById("contenidoProtegido").style.display = "none";
-        document.getElementById("contenidoRestringido").style.display = "block";
+      if (!user) { window.location.href = "login.html"; return; }
+      if (user.email !== ADMIN_EMAIL) {
+        document.getElementById("sinAcceso").style.display = "block";
         return;
       }
-      // Admin redirige a su panel
-      if (user.email === ADMIN_EMAIL) {
-        window.location.href = "consulta-admin.html";
-        return;
-      }
-      document.getElementById("contenidoProtegido").style.display = "block";
-      document.getElementById("contenidoRestringido").style.display = "none";
+      document.getElementById("contenidoAdmin").style.display = "block";
       iniciarTabla();
     });
 
@@ -195,7 +222,8 @@
               "<td><span class='badge bg-info text-dark'>" + (d.anio || "-") + "</span></td>" +
               "<td><small class='text-secondary'>" + (d.registradoPor || "-") + "</small></td>" +
               "<td>" +
-                "<button class='btn btn-sm btn-warning' onclick=\"editarRegistro('" + doc.id + "')\">Editar</button>" +
+                "<button class='btn btn-sm btn-warning me-1' onclick=\"editarRegistro('" + doc.id + "')\">Editar</button>" +
+                "<button class='btn btn-sm btn-danger' onclick=\"eliminarRegistro('" + doc.id + "')\">Eliminar</button>" +
               "</td>";
             tabla.appendChild(fila);
           });
@@ -215,6 +243,14 @@
       document.getElementById("busquedaTanda").addEventListener("change", cargar);
       document.getElementById("busquedaAnio").addEventListener("change", cargar);
       document.getElementById("busquedaAtencion").addEventListener("change", cargar);
+    }
+
+    function eliminarRegistro(id) {
+      if (confirm("Seguro que quieres eliminar este registro?")) {
+        db.collection("ninos").doc(id).delete()
+          .then(function() { location.reload(); })
+          .catch(function(err) { alert("No se pudo eliminar: " + err.message); });
+      }
     }
 
     function editarRegistro(id) {
