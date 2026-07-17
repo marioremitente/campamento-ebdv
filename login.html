@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Campamento — Ingreso</title>
+  <title>Campamento EBDV — Ingreso</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="imagenes-fondo.css">
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -11,99 +11,159 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="firebase-init.js"></script>
   <style>
+    body { background-color: #121212; }
     .card { background-color: #1e1e1e; border: 1px solid #333; }
   </style>
 </head>
 <body class="text-light d-flex flex-column align-items-center justify-content-center min-vh-100">
-  <div class="card p-4 shadow" style="width: 100%; max-width: 420px;">
-    <h2 class="text-center mb-1 text-warning">Campamento EBDV</h2>
-    <p class="text-center text-secondary mb-4 text-warning">Ingreso de Lider / Maestro</p>
-    <div id="errorMsg" class="alert alert-danger" style="display:none;"></div>
-    <form id="formularioLogin">
-      <div class="mb-3">
-        <label class="form-label" style="color: #ffd700;">Correo electronico</label>
-        <input type="email" id="email" class="form-control bg-dark text-light border-secondary" placeholder="correo@ejemplo.com" required>
-      </div>
-      <div class="mb-3">
-        <label class="form-label" style="color: #ffd700;">Contrasena</label>
-        <input type="password" id="password" class="form-control bg-dark text-light border-secondary" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" required>
-      </div>
-   
-<button type="submit" id="btnLogin" class="btn btn-primary w-100 mb-2">Ingresar</button>
 
-<div class="text-center mb-2">
-  <a href="#" id="olvidePassword" class="text-warning text-decoration-none">
-    ¿Olvidaste tu contraseña?
-  </a>
-</div>
-
-<a href="estadisticas-publica.html" class="btn btn-warning w-100">Invitado</a>
-
-    </form>
-    <p class="text-center text-secondary mt-3 mb-0" style="font-size: 0.85rem;">
-      Sin cuenta? Contacta al administrador.
-    </p>
+  <!-- PANTALLA: SISTEMA CERRADO -->
+  <div id="pantallaFuera" style="display:none;" class="text-center p-4" style="max-width:500px;">
+    <div class="card p-4 shadow">
+      <h2 class="mb-3">🔒 Sistema no disponible</h2>
+      <p class="text-secondary">
+        El sistema de registro del Campamento EBDV solo esta disponible durante el mes de julio.<br><br>
+        Vuelve en <strong id="mesProximo"></strong>.
+      </p>
+      <hr class="border-secondary">
+      <p class="text-secondary small mb-2">¿Eres administrador?</p>
+      <button class="btn btn-outline-light btn-sm" onclick="mostrarLoginAdmin()">Acceso Admin</button>
+    </div>
   </div>
+
+  <!-- PANTALLA: ACCESO DESHABILITADO -->
+  <div id="pantallaDeshabilitado" style="display:none;" class="text-center p-4">
+    <div class="card p-4 shadow">
+      <h2 class="mb-3">⛔ Acceso restringido</h2>
+      <p class="text-secondary">
+        Tu cuenta no tiene acceso habilitado en este momento.<br>
+        Contacta al administrador para solicitar acceso.
+      </p>
+      <button class="btn btn-outline-light btn-sm mt-2" onclick="auth.signOut()">Cerrar sesion</button>
+    </div>
+  </div>
+
+  <!-- FORMULARIO DE LOGIN -->
+  <div id="pantallaLogin" style="display:none;">
+    <div class="card p-4 shadow" style="width:100%;max-width:420px;">
+      <h2 class="text-center mb-1">Campamento EBDV</h2>
+      <p class="text-center text-secondary mb-4" id="subtituloLogin">Ingreso de Lider / Maestro</p>
+
+      <div id="errorMsg" class="alert alert-danger" style="display:none;"></div>
+
+      <form id="formularioLogin">
+        <div class="mb-3">
+          <label class="form-label">Correo electronico</label>
+          <input type="email" id="email" class="form-control bg-dark text-light border-secondary" placeholder="correo@ejemplo.com" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Contrasena</label>
+          <input type="password" id="password" class="form-control bg-dark text-light border-secondary" placeholder="••••••••" required>
+        </div>
+        <button type="submit" id="btnLogin" class="btn btn-primary w-100">Ingresar</button>
+      </form>
+
+      <p class="text-center text-secondary mt-3 mb-0" style="font-size:0.85rem;">
+        Sin cuenta? Contacta al administrador.
+      </p>
+    </div>
+  </div>
+
   <script src="footer.js"></script>
+  <script src="imagenes-fondo.js"></script>
+
   <script>
-    auth.onAuthStateChanged(function(user) {
-      if (user) window.location.href = "consulta.html";
+    const ADMIN_EMAIL = "remitente2008@gmail.com";
+    const MES_CAMPAMENTO = 6; // Julio = mes 6 (0-indexed)
+    let modoAdminForzado = false;
+
+    function esJulio() {
+      return new Date().getMonth() === MES_CAMPAMENTO;
+    }
+
+    function mostrarLoginAdmin() {
+      modoAdminForzado = true;
+      document.getElementById("pantallaFuera").style.display = "none";
+      document.getElementById("pantallaLogin").style.display = "block";
+      document.getElementById("subtituloLogin").textContent = "Acceso de Administrador";
+    }
+
+    auth.onAuthStateChanged(async function(user) {
+      if (!user) {
+        // Sin sesion — verificar si es julio
+        if (esJulio() || modoAdminForzado) {
+          document.getElementById("pantallaLogin").style.display = "block";
+        } else {
+          mostrarPantallaFuera();
+        }
+        return;
+      }
+
+      // Con sesion — admin siempre pasa
+      if (user.email === ADMIN_EMAIL) {
+        window.location.href = "consulta.html";
+        return;
+      }
+
+      // Verificar si el usuario tiene acceso habilitado
+      try {
+        const doc = await db.collection("usuarios").doc(user.uid).get();
+        if (doc.exists && doc.data().habilitado === true) {
+          // Usuario habilitado — verificar si es julio
+          if (esJulio()) {
+            window.location.href = "consulta.html";
+          } else {
+            // Habilitado pero fuera de julio — solo puede consultar
+            window.location.href = "consulta.html";
+          }
+        } else {
+          // Usuario no habilitado
+          document.getElementById("pantallaDeshabilitado").style.display = "flex";
+          document.getElementById("pantallaDeshabilitado").style.flexDirection = "column";
+          document.getElementById("pantallaDeshabilitado").style.alignItems = "center";
+          document.getElementById("pantallaDeshabilitado").style.justifyContent = "center";
+          document.getElementById("pantallaDeshabilitado").style.minHeight = "100vh";
+        }
+      } catch(err) {
+        console.error(err);
+        auth.signOut();
+      }
     });
-    document.getElementById("formularioLogin").addEventListener("submit", function(e) {
+
+    function mostrarPantallaFuera() {
+      document.getElementById("pantallaFuera").style.display = "flex";
+      document.getElementById("pantallaFuera").style.flexDirection = "column";
+      document.getElementById("pantallaFuera").style.alignItems = "center";
+      document.getElementById("pantallaFuera").style.justifyContent = "center";
+      document.getElementById("pantallaFuera").style.minHeight = "100vh";
+
+      // Calcular proximo julio
+      const hoy = new Date();
+      const anioProximo = hoy.getMonth() >= MES_CAMPAMENTO ? hoy.getFullYear() + 1 : hoy.getFullYear();
+      document.getElementById("mesProximo").textContent = "julio de " + anioProximo;
+    }
+
+    document.getElementById("formularioLogin").addEventListener("submit", async function(e) {
       e.preventDefault();
-      var email = document.getElementById("email").value.trim();
-      var password = document.getElementById("password").value.trim();
-      var btn = document.getElementById("btnLogin");
-      var errorMsg = document.getElementById("errorMsg");
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const btn = document.getElementById("btnLogin");
+      const errorMsg = document.getElementById("errorMsg");
+
       btn.disabled = true;
       btn.textContent = "Ingresando...";
       errorMsg.style.display = "none";
-      auth.signInWithEmailAndPassword(email, password)
-        .then(function() { window.location.href = "consulta.html"; })
-        .catch(function() {
-          errorMsg.textContent = "Correo o contrasena incorrectos.";
-          errorMsg.style.display = "block";
-          btn.disabled = false;
-          btn.textContent = "Ingresar";
-        });
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        // onAuthStateChanged se encarga del resto
+      } catch(err) {
+        errorMsg.textContent = "Correo o contrasena incorrectos.";
+        errorMsg.style.display = "block";
+        btn.disabled = false;
+        btn.textContent = "Ingresar";
+      }
     });
   </script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js')
-        .then(function() { console.log('SW registrado'); })
-        .catch(function(err) { console.log('Error SW', err); });
-    }
-  </script>
-  <script>
-    document.body.style.background =
-      "linear-gradient(rgba(0,20,60,0.45), rgba(0,20,60,0.45)), url('bg9.png')";
-    document.body.style.backgroundSize = "cover";
-    document.body.style.backgroundPosition = "center";
-    document.body.style.backgroundRepeat = "no-repeat";
-    document.body.style.backgroundAttachment = "fixed";
-  </script>
-
-<script>
-document.getElementById("olvidePassword").addEventListener("click", function(e) {
-  e.preventDefault();
-
-  var email = prompt("Introduce tu correo electrónico:");
-
-  if (!email) return;
-
-  auth.sendPasswordResetEmail(email)
-    .then(function() {
-      alert(
-        "Se ha enviado un enlace para restablecer tu contraseña.\n\n" +
-        "Revisa tu bandeja de entrada y también la carpeta de Spam o Correo no deseado."
-      );
-    })
-    .catch(function(error) {
-      alert("Error: " + error.message);
-    });
-});
-</script>
-
 </body>
 </html>
