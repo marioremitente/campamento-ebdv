@@ -1,10 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-<style>
-  .text-secondary {
-    color: #000 !important;
-  }
-</style>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,7 +21,7 @@
 
     <div id="panelAdmin" style="display:none;">
       <h2 class="mb-1">Gestion de Usuarios</h2>
-      <p class="text-secondary mb-4">
+      <p class="text-dark mb-4">
         Habilita o deshabilita el acceso de cada usuario. El administrador siempre tiene acceso.
       </p>
 
@@ -51,14 +46,14 @@
       <!-- LISTA DE USUARIOS -->
       <div class="card bg-secondary p-3 mb-4">
         <h5 class="mb-3">Usuarios registrados</h5>
-        <div id="cargandoUsuarios" class="text-secondary">Cargando usuarios...</div>
+        <div id="cargandoUsuarios" class="text-dark">Cargando usuarios...</div>
         <div id="listaUsuarios"></div>
       </div>
 
       <!-- CONTROL DE ACCESO POR FECHA -->
       <div class="card bg-secondary p-4 mb-4">
         <h5 class="mb-3">Control de acceso por fecha</h5>
-        <p class="text-secondary small">
+        <p class="text-dark small">
           Por defecto el sistema solo permite acceso en julio. Puedes forzar acceso temporal para un usuario especifico desde la lista de arriba.
         </p>
         <div class="alert alert-info small mb-0">
