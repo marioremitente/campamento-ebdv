@@ -75,28 +75,45 @@
 
     function mostrarEstadisticas(anioFiltro) {
       var porAnio = resumenGlobal.porAnio || {};
-      var porEdad = resumenGlobal.porEdad || {};
 
-      var total = resumenGlobal.total || 0;
-      var primera = resumenGlobal.porTanda ? (resumenGlobal.porTanda.primera || 0) : 0;
-      var segunda = resumenGlobal.porTanda ? (resumenGlobal.porTanda.segunda || 0) : 0;
-      var conBrazalete = resumenGlobal.conBrazalete || 0;
-      var sinBrazalete = resumenGlobal.sinBrazalete || 0;
-      var requiereAtencion = resumenGlobal.requiereAtencion || 0;
-      var sinAtencion = resumenGlobal.sinAtencion || 0;
-
-      // Filtrar por anio si aplica
-      if (anioFiltro) {
-        total = porAnio[anioFiltro] || 0;
+      // Elegir el conjunto de datos: el del anio filtrado o la suma de todos.
+      var datos;
+      if (anioFiltro && porAnio[anioFiltro]) {
+        datos = porAnio[anioFiltro];
+      } else {
+        // Agregar todos los anios
+        datos = { total: 0, primera: 0, segunda: 0, porEdad: {}, conBrazalete: 0, sinBrazalete: 0, requiereAtencion: 0, sinAtencion: 0 };
+        Object.keys(porAnio).forEach(function(a) {
+          var y = porAnio[a];
+          if (!y) return;
+          datos.total += y.total || 0;
+          datos.primera += y.primera || 0;
+          datos.segunda += y.segunda || 0;
+          datos.conBrazalete += y.conBrazalete || 0;
+          datos.sinBrazalete += y.sinBrazalete || 0;
+          datos.requiereAtencion += y.requiereAtencion || 0;
+          datos.sinAtencion += y.sinAtencion || 0;
+          Object.keys(y.porEdad || {}).forEach(function(e) {
+            datos.porEdad[e] = (datos.porEdad[e] || 0) + (y.porEdad[e] || 0);
+          });
+        });
       }
 
-      var filasEdad = Object.keys(porEdad).sort(function(a, b) {
+      var total = datos.total || 0;
+      var primera = datos.primera || 0;
+      var segunda = datos.segunda || 0;
+      var conBrazalete = datos.conBrazalete || 0;
+      var sinBrazalete = datos.sinBrazalete || 0;
+      var requiereAtencion = datos.requiereAtencion || 0;
+      var sinAtencion = datos.sinAtencion || 0;
+
+      var filasEdad = Object.keys(datos.porEdad || {}).sort(function(a, b) {
         return a === "sin_edad" ? 1 : (b === "sin_edad" ? -1 : Number(a) - Number(b));
       }).map(function(edad) {
         var etiqueta = edad === "sin_edad" ? "Sin edad registrada" : edad + " anio(s)";
         return "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
           escapeHtml(etiqueta) +
-          "<span class='badge bg-primary'>" + (porEdad[edad] || 0) + "</span>" +
+          "<span class='badge bg-primary'>" + (datos.porEdad[edad] || 0) + "</span>" +
           "</li>";
       }).join("");
 
@@ -118,13 +135,13 @@
           "</div>" +
           "<div class='col-md-4'>" +
             "<div class='card bg-secondary text-white text-center p-3'>" +
-              "<h1 class='mb-0'>" + (anioFiltro ? "—" : primera) + "</h1>" +
+              "<h1 class='mb-0'>" + primera + "</h1>" +
               "<small>Primera tanda</small>" +
             "</div>" +
           "</div>" +
           "<div class='col-md-4'>" +
             "<div class='card bg-secondary text-white text-center p-3'>" +
-              "<h1 class='mb-0'>" + (anioFiltro ? "—" : segunda) + "</h1>" +
+              "<h1 class='mb-0'>" + segunda + "</h1>" +
               "<small>Segunda tanda</small>" +
             "</div>" +
           "</div>" +
@@ -136,17 +153,17 @@
         "<h5>Brazalete</h5>" +
         "<ul class='list-group mb-4'>" +
           "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
-            "Con brazalete <span class='badge bg-success'>" + (anioFiltro ? "—" : conBrazalete) + "</span></li>" +
+            "Con brazalete <span class='badge bg-success'>" + conBrazalete + "</span></li>" +
           "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
-            "Sin brazalete <span class='badge bg-secondary'>" + (anioFiltro ? "—" : sinBrazalete) + "</span></li>" +
+            "Sin brazalete <span class='badge bg-secondary'>" + sinBrazalete + "</span></li>" +
         "</ul>" +
 
         "<h5>Atencion Especial</h5>" +
         "<ul class='list-group'>" +
           "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
-            "Requieren atencion <span class='badge bg-warning text-dark'>" + (anioFiltro ? "—" : requiereAtencion) + "</span></li>" +
+            "Requieren atencion <span class='badge bg-warning text-dark'>" + requiereAtencion + "</span></li>" +
           "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
-            "Sin atencion especial <span class='badge bg-secondary'>" + (anioFiltro ? "—" : sinAtencion) + "</span></li>" +
+            "Sin atencion especial <span class='badge bg-secondary'>" + sinAtencion + "</span></li>" +
         "</ul>";
     }
   </script>

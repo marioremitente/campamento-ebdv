@@ -38,37 +38,47 @@ function escapeHtml(valor) {
 // ni condiciones de salud. Llamar tras registrar/editar/eliminar/respaldar.
 function recalcularResumenPublico() {
   return db.collection("ninos").get().then(function(snapshot) {
+    // Estructura por anio: cada anio guarda su desglose completo (solo numeros).
     var resumen = {
       total: 0,
       porAnio: {},
-      porTanda: { primera: 0, segunda: 0 },
-      porEdad: {},
-      conBrazalete: 0,
-      sinBrazalete: 0,
-      requiereAtencion: 0,
-      sinAtencion: 0,
       actualizadoEn: firebase.firestore.Timestamp.now()
     };
+
+    function nuevoAnio() {
+      return {
+        total: 0,
+        primera: 0,
+        segunda: 0,
+        porEdad: {},
+        conBrazalete: 0,
+        sinBrazalete: 0,
+        requiereAtencion: 0,
+        sinAtencion: 0
+      };
+    }
 
     snapshot.forEach(function(doc) {
       var d = doc.data();
       resumen.total++;
 
       var anio = d.anio ? String(d.anio) : "sin_anio";
-      resumen.porAnio[anio] = (resumen.porAnio[anio] || 0) + 1;
+      if (!resumen.porAnio[anio]) resumen.porAnio[anio] = nuevoAnio();
+      var y = resumen.porAnio[anio];
+      y.total++;
 
       var tanda = (d.tanda || "").toLowerCase();
-      if (tanda === "primera") resumen.porTanda.primera++;
-      else if (tanda === "segunda") resumen.porTanda.segunda++;
+      if (tanda === "primera") y.primera++;
+      else if (tanda === "segunda") y.segunda++;
 
       var edad = (d.edad !== undefined && d.edad !== null) ? String(d.edad) : "sin_edad";
-      resumen.porEdad[edad] = (resumen.porEdad[edad] || 0) + 1;
+      y.porEdad[edad] = (y.porEdad[edad] || 0) + 1;
 
-      if (d.tieneBrazalete === "si") resumen.conBrazalete++;
-      else resumen.sinBrazalete++;
+      if (d.tieneBrazalete === "si") y.conBrazalete++;
+      else y.sinBrazalete++;
 
-      if (d.requiereAtencionEspecial === "si") resumen.requiereAtencion++;
-      else resumen.sinAtencion++;
+      if (d.requiereAtencionEspecial === "si") y.requiereAtencion++;
+      else y.sinAtencion++;
     });
 
     return db.collection("stats_publicas").doc("resumen").set(resumen);
