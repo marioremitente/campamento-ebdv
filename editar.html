@@ -11,6 +11,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="firebase-init.js"></script>
+  <script src="config.js"></script>
 </head>
 
 <body class="bg-dark text-light p-4">
@@ -205,6 +206,7 @@
       db.collection("ninos").doc(id).update(nuevosDatos)
         .then(function() { return Promise.all(promesasHistorial); })
         .then(function() {
+          recalcularResumenPublico();
           localStorage.removeItem("registroEditarId");
           window.location.href = "consulta.html";
         })

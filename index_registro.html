@@ -10,6 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="firebase-init.js"></script>
+  <script src="config.js"></script>
 </head>
 
 <body class="bg-dark text-light p-4">
@@ -382,6 +383,9 @@
 
         actualizarEstadoCupos();
         verificarEdadTanda();
+
+        // Actualizar resumen publico (solo totales agregados)
+        recalcularResumenPublico();
 
         exito.textContent = nuevoRegistro.nombre + " " + nuevoRegistro.apellido + " registrado correctamente.";
         exito.style.display = "block";

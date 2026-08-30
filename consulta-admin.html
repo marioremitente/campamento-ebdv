@@ -150,6 +150,7 @@
       }
       document.getElementById("contenidoAdmin").style.display = "block";
       iniciarTabla();
+      recalcularResumenPublico();
     });
 
     function hayFiltroActivo() {
@@ -253,7 +254,10 @@
     function eliminarRegistro(id) {
       if (confirm("Seguro que quieres eliminar este registro?")) {
         db.collection("ninos").doc(id).delete()
-          .then(function() { location.reload(); })
+          .then(function() {
+            recalcularResumenPublico();
+            location.reload();
+          })
           .catch(function(err) { alert("No se pudo eliminar: " + err.message); });
       }
     }

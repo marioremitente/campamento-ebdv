@@ -36,29 +36,24 @@
   <script src="footer.js"></script>
 
   <script>
-    // Requiere autenticacion — el acceso publico queda deshabilitado por seguridad
-    var todosLosDatos = [];
+    // Se lee SOLO el resumen agregado (stats_publicas) que contiene unicamente
+    // totales (numeros). NO se lee la coleccion "ninos" para no exponer datos
+    // personales o de salud de los menores.
+    var resumenGlobal = null;
 
-    auth.onAuthStateChanged(function(user) {
-      if (!user) { window.location.href = "login.html"; return; }
-
-      db.collection("ninos").get().then(function(snapshot) {
+    db.collection("stats_publicas").doc("resumen").get().then(function(doc) {
       document.getElementById("cargando").style.display = "none";
 
-      if (snapshot.empty) {
+      if (!doc.exists) {
         document.getElementById("reporte").innerHTML =
-          "<p class='text-secondary'>No hay registros todavia.</p>";
+          "<p class='text-secondary'>Aun no hay estadisticas disponibles. El resumen se genera cuando se registran ninos.</p>";
         return;
       }
 
-      todosLosDatos = [];
-      snapshot.forEach(function(doc) { todosLosDatos.push(doc.data()); });
+      resumenGlobal = doc.data();
 
-      var anios = [];
-      todosLosDatos.forEach(function(d) {
-        if (d.anio && !anios.includes(d.anio)) anios.push(d.anio);
-      });
-      anios.sort(function(a, b) { return b - a; });
+      var anios = Object.keys(resumenGlobal.porAnio || {});
+      anios.sort(function(a, b) { return Number(b) - Number(a); });
 
       var select = document.getElementById("filtroAnio");
       anios.forEach(function(anio) {
@@ -68,63 +63,51 @@
         select.appendChild(opt);
       });
 
-      var anioActual = new Date().getFullYear();
-      if (anios.includes(anioActual)) select.value = anioActual;
-
       mostrarEstadisticas(select.value);
 
       select.addEventListener("change", function() {
         mostrarEstadisticas(select.value);
       });
-
     }).catch(function(err) {
       console.error(err);
       document.getElementById("cargando").textContent = "Error al cargar estadisticas.";
     });
-    });
 
     function mostrarEstadisticas(anioFiltro) {
-      var datos = anioFiltro
-        ? todosLosDatos.filter(function(d) { return String(d.anio) === String(anioFiltro); })
-        : todosLosDatos;
+      var porAnio = resumenGlobal.porAnio || {};
+      var porEdad = resumenGlobal.porEdad || {};
 
-      var conteoEdad = {};
-      var conteoTanda = { primera: 0, segunda: 0 };
-      var conteoBrazalete = { si: 0, no: 0 };
-      var conteoAtencion = { si: 0, no: 0 };
-      var total = datos.length;
+      var total = resumenGlobal.total || 0;
+      var primera = resumenGlobal.porTanda ? (resumenGlobal.porTanda.primera || 0) : 0;
+      var segunda = resumenGlobal.porTanda ? (resumenGlobal.porTanda.segunda || 0) : 0;
+      var conBrazalete = resumenGlobal.conBrazalete || 0;
+      var sinBrazalete = resumenGlobal.sinBrazalete || 0;
+      var requiereAtencion = resumenGlobal.requiereAtencion || 0;
+      var sinAtencion = resumenGlobal.sinAtencion || 0;
 
-      datos.forEach(function(d) {
-        var edad = (d.edad !== undefined && d.edad !== null) ? d.edad : "Sin edad";
-        conteoEdad[edad] = (conteoEdad[edad] || 0) + 1;
+      // Filtrar por anio si aplica
+      if (anioFiltro) {
+        total = porAnio[anioFiltro] || 0;
+      }
 
-        var tanda = d.tanda ? d.tanda.toLowerCase() : "";
-        if (tanda === "primera") conteoTanda.primera++;
-        else if (tanda === "segunda") conteoTanda.segunda++;
-
-        if (d.tieneBrazalete === "si") conteoBrazalete.si++;
-        else conteoBrazalete.no++;
-
-        if (d.requiereAtencionEspecial === "si") conteoAtencion.si++;
-        else conteoAtencion.no++;
-      });
-
-      var edadesOrdenadas = Object.keys(conteoEdad).sort(function(a, b) {
-        return Number(a) - Number(b);
-      });
-
-      var titulo = anioFiltro ? "Campamento " + anioFiltro : "Todos los campamentos";
-
-      var filasEdad = edadesOrdenadas.map(function(edad) {
-        var etiqueta = edad === "Sin edad" ? "Sin edad registrada" : edad + " anio(s)";
+      var filasEdad = Object.keys(porEdad).sort(function(a, b) {
+        return a === "sin_edad" ? 1 : (b === "sin_edad" ? -1 : Number(a) - Number(b));
+      }).map(function(edad) {
+        var etiqueta = edad === "sin_edad" ? "Sin edad registrada" : edad + " anio(s)";
         return "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
-          etiqueta +
-          "<span class='badge bg-primary'>" + conteoEdad[edad] + "</span>" +
+          escapeHtml(etiqueta) +
+          "<span class='badge bg-primary'>" + (porEdad[edad] || 0) + "</span>" +
           "</li>";
       }).join("");
 
+      if (!filasEdad) {
+        filasEdad = "<li class='list-group-item bg-dark text-white'>Sin datos por edad.</li>";
+      }
+
+      var titulo = anioFiltro ? "Campamento " + anioFiltro : "Todos los campamentos";
+
       document.getElementById("reporte").innerHTML =
-        "<h5 class='text-info mb-3'>" + titulo + "</h5>" +
+        "<h5 class='text-info mb-3'>" + escapeHtml(titulo) + "</h5>" +
 
         "<div class='row g-3 mb-4'>" +
           "<div class='col-md-4'>" +
@@ -135,13 +118,13 @@
           "</div>" +
           "<div class='col-md-4'>" +
             "<div class='card bg-secondary text-white text-center p-3'>" +
-              "<h1 class='mb-0'>" + conteoTanda.primera + "</h1>" +
+              "<h1 class='mb-0'>" + (anioFiltro ? "—" : primera) + "</h1>" +
               "<small>Primera tanda</small>" +
             "</div>" +
           "</div>" +
           "<div class='col-md-4'>" +
             "<div class='card bg-secondary text-white text-center p-3'>" +
-              "<h1 class='mb-0'>" + conteoTanda.segunda + "</h1>" +
+              "<h1 class='mb-0'>" + (anioFiltro ? "—" : segunda) + "</h1>" +
               "<small>Segunda tanda</small>" +
             "</div>" +
           "</div>" +
@@ -153,17 +136,17 @@
         "<h5>Brazalete</h5>" +
         "<ul class='list-group mb-4'>" +
           "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
-            "Con brazalete <span class='badge bg-success'>" + conteoBrazalete.si + "</span></li>" +
+            "Con brazalete <span class='badge bg-success'>" + (anioFiltro ? "—" : conBrazalete) + "</span></li>" +
           "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
-            "Sin brazalete <span class='badge bg-secondary'>" + conteoBrazalete.no + "</span></li>" +
+            "Sin brazalete <span class='badge bg-secondary'>" + (anioFiltro ? "—" : sinBrazalete) + "</span></li>" +
         "</ul>" +
 
         "<h5>Atencion Especial</h5>" +
         "<ul class='list-group'>" +
           "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
-            "Requieren atencion <span class='badge bg-warning text-dark'>" + conteoAtencion.si + "</span></li>" +
+            "Requieren atencion <span class='badge bg-warning text-dark'>" + (anioFiltro ? "—" : requiereAtencion) + "</span></li>" +
           "<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center'>" +
-            "Sin atencion especial <span class='badge bg-secondary'>" + conteoAtencion.no + "</span></li>" +
+            "Sin atencion especial <span class='badge bg-secondary'>" + (anioFiltro ? "—" : sinAtencion) + "</span></li>" +
         "</ul>";
     }
   </script>
