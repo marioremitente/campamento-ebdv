@@ -10,6 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="firebase-init.js"></script>
+  <script src="config.js"></script>
   <style>
     .card { background-color: #1e1e1e; border: 1px solid #333; }
   </style>
@@ -72,7 +73,6 @@
           </a>
         </div>
 
-        <a href="estadisticas-publica.html" class="btn btn-warning w-100">Invitado</a>
       </form>
 
       <p class="text-center text-secondary mt-3 mb-0" style="font-size:0.85rem;">
@@ -84,8 +84,7 @@
   <script src="footer.js"></script>
 
   <script>
-    const ADMIN_EMAIL = "remitente2008@gmail.com";
-    const MES_CAMPAMENTO = 6; // Julio = 6 (0-indexed)
+    // MES_CAMPAMENTO y ADMIN vienen de config.js
     let modoAdminForzado = false;
 
     function esJulio() {
@@ -119,7 +118,7 @@
       }
 
       // Admin siempre pasa
-      if (user.email === ADMIN_EMAIL) {
+      if (esAdmin(user)) {
         window.location.href = "consulta-admin.html";
         return;
       }
@@ -170,10 +169,11 @@
       if (!email) return;
       auth.sendPasswordResetEmail(email)
         .then(function() {
-          alert("Se ha enviado un enlace para restablecer tu contrasena.\nRevisa tu bandeja de entrada y la carpeta de Spam.");
+          alert("Si el correo existe en el sistema, se ha enviado un enlace para restablecer tu contrasena.\nRevisa tu bandeja de entrada y la carpeta de Spam.");
         })
         .catch(function(error) {
-          alert("Error: " + error.message);
+          console.error(error);
+          alert("Si el correo existe en el sistema, se ha enviado un enlace para restablecer tu contrasena.\nRevisa tu bandeja de entrada y la carpeta de Spam.");
         });
     });
   </script>

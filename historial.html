@@ -26,6 +26,8 @@
 
   <script src="firebase-init.js"></script>
 
+  <script src="config.js"></script>
+
 </head>
 
 <body class="bg-dark text-light p-4">
@@ -213,7 +215,7 @@
 
                 "<small class='text-secondary'>" +
 
-                  (d.idDocumento || "-") +
+                  escapeHtml(d.idDocumento || "-") +
 
                 "</small>" +
 
@@ -221,19 +223,19 @@
 
               "<td>" +
 
-                (d.campo || "-") +
+                escapeHtml(d.campo || "-") +
 
               "</td>" +
 
               "<td class='text-danger'>" +
 
-                formatearValor(d.antes) +
+                escapeHtml(formatearValor(d.antes)) +
 
               "</td>" +
 
               "<td class='text-success'>" +
 
-                formatearValor(d.despues) +
+                escapeHtml(formatearValor(d.despues)) +
 
               "</td>" +
 
@@ -241,7 +243,7 @@
 
                 "<small>" +
 
-                  (d.editadoPor || "-") +
+                  escapeHtml(d.editadoPor || "-") +
 
                 "</small>" +
 
@@ -251,7 +253,7 @@
 
                 "<small>" +
 
-                  fecha +
+                  escapeHtml(fecha) +
 
                 "</small>" +
 

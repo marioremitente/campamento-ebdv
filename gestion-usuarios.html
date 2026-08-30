@@ -10,6 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="firebase-init.js"></script>
+  <script src="config.js"></script>
 </head>
 <body class="bg-dark text-light p-4">
   <div class="container" style="max-width:750px;">
@@ -72,15 +73,14 @@
   <script src="imagenes-fondo.js"></script>
 
   <script>
-    const ADMIN_EMAIL = "remitente2008@gmail.com";
-    const MES_CAMPAMENTO = 6; // Julio
+    // MES_CAMPAMENTO viene de config.js
 
     const meses = ["enero","febrero","marzo","abril","mayo","junio",
                    "julio","agosto","septiembre","octubre","noviembre","diciembre"];
 
     auth.onAuthStateChanged(async function(user) {
       if (!user) { window.location.href = "login.html"; return; }
-      if (user.email !== ADMIN_EMAIL) {
+      if (!esAdmin(user)) {
         document.getElementById("sinAcceso").style.display = "block";
         return;
       }
@@ -122,9 +122,9 @@
           card.innerHTML =
             "<div class='d-flex justify-content-between align-items-start'>" +
               "<div>" +
-                "<strong>" + (d.email || "Sin correo") + "</strong><br>" +
-                "<small class='text-secondary'>UID: " + uid + "</small><br>" +
-                "<small>Agregado: " + (d.agregadoEn ? new Date(d.agregadoEn.toDate()).toLocaleDateString("es-DO") : "-") + "</small>" +
+                "<strong>" + escapeHtml(d.email || "Sin correo") + "</strong><br>" +
+                "<small class='text-secondary'>UID: " + escapeHtml(uid) + "</small><br>" +
+                "<small>Agregado: " + escapeHtml(d.agregadoEn ? new Date(d.agregadoEn.toDate()).toLocaleDateString("es-DO") : "-") + "</small>" +
               "</div>" +
               "<div class='d-flex flex-column gap-2 align-items-end'>" +
                 "<span class='badge " + (habilitado ? "bg-success" : "bg-danger") + "'>" +
@@ -137,14 +137,14 @@
             "</div>" +
             "<div class='d-flex gap-2 mt-3 flex-wrap'>" +
               "<button class='btn btn-sm " + (habilitado ? "btn-danger" : "btn-success") + "' " +
-                "onclick=\"toggleHabilitado('" + uid + "', " + habilitado + ")\">" +
+                "onclick=\"toggleHabilitado('" + escapeHtml(uid) + "', " + habilitado + ")\">" +
                 (habilitado ? "Deshabilitar" : "Habilitar") +
               "</button>" +
               "<button class='btn btn-sm " + (accesoTodoElAnio ? "btn-secondary" : "btn-warning") + "' " +
-                "onclick=\"toggleAccesoAnio('" + uid + "', " + accesoTodoElAnio + ")\">" +
+                "onclick=\"toggleAccesoAnio('" + escapeHtml(uid) + "', " + accesoTodoElAnio + ")\">" +
                 (accesoTodoElAnio ? "Quitar acceso anual" : "Dar acceso todo el anio") +
               "</button>" +
-              "<button class='btn btn-sm btn-outline-danger' onclick=\"eliminarUsuario('" + uid + "')\">Eliminar</button>" +
+              "<button class='btn btn-sm btn-outline-danger' onclick=\"eliminarUsuario('" + escapeHtml(uid) + "')\">Eliminar</button>" +
             "</div>";
 
           lista.appendChild(card);

@@ -155,37 +155,37 @@ function mostrarHistorial() {
 
           "<td>" +
 
-          (d.idDocumento || "-") +
+          escapeHtml(d.idDocumento || "-") +
 
           "</td>" +
 
           "<td>" +
 
-          (d.campo || "-") +
+          escapeHtml(d.campo || "-") +
 
           "</td>" +
 
           "<td class='text-danger'>" +
 
-          (d.antes || "-") +
+          escapeHtml(d.antes || "-") +
 
           "</td>" +
 
           "<td class='text-success'>" +
 
-          (d.despues || "-") +
+          escapeHtml(d.despues || "-") +
 
           "</td>" +
 
           "<td>" +
 
-          (d.editadoPor || "-") +
+          escapeHtml(d.editadoPor || "-") +
 
           "</td>" +
 
           "<td>" +
 
-          fecha +
+          escapeHtml(fecha) +
 
           "</td>";
 

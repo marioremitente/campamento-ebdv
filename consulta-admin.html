@@ -16,6 +16,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="firebase-init.js"></script>
+  <script src="config.js"></script>
 </head>
 <body class="bg-dark text-light p-4">
   <div class="container">
@@ -120,8 +121,6 @@
   <script src="footer.js"></script>
 
   <script>
-    const ADMIN_EMAIL = "remitente2008@gmail.com";
-
     function cerrarSesion() {
       auth.signOut().then(function() { window.location.href = "login.html"; });
     }
@@ -145,7 +144,7 @@
 
     auth.onAuthStateChanged(function(user) {
       if (!user) { window.location.href = "login.html"; return; }
-      if (user.email !== ADMIN_EMAIL) {
+      if (!esAdmin(user)) {
         document.getElementById("sinAcceso").style.display = "block";
         return;
       }
@@ -217,19 +216,19 @@
 
             var fila = document.createElement("tr");
             fila.innerHTML =
-              "<td>" + (d.nombre || "-") + "</td>" +
-              "<td>" + (d.apellido || "-") + "</td>" +
-              "<td>" + (d.edad || "-") + "</td>" +
-              "<td>" + (d.quienLoTrajo || "-") + "</td>" +
-              "<td>" + (d.tanda || "-") + "</td>" +
+              "<td>" + escapeHtml(d.nombre || "-") + "</td>" +
+              "<td>" + escapeHtml(d.apellido || "-") + "</td>" +
+              "<td>" + escapeHtml(d.edad || "-") + "</td>" +
+              "<td>" + escapeHtml(d.quienLoTrajo || "-") + "</td>" +
+              "<td>" + escapeHtml(d.tanda || "-") + "</td>" +
               "<td><span class='badge " + (tieneBrazalete ? "bg-success" : "bg-secondary") + "'>" + (tieneBrazalete ? "Si" : "No") + "</span></td>" +
               "<td>" + (tieneAtencion ? "<span class='badge bg-warning text-dark'>Si</span>" : "<span class='badge bg-secondary'>No</span>") + "</td>" +
-              "<td><small>" + (tieneAtencion && d.condicionEspecial ? d.condicionEspecial : "-") + "</small></td>" +
-              "<td><span class='badge bg-info text-dark'>" + (d.anio || "-") + "</span></td>" +
-              "<td><small class='text-secondary'>" + (d.registradoPor || "-") + "</small></td>" +
+              "<td><small>" + (tieneAtencion && d.condicionEspecial ? escapeHtml(d.condicionEspecial) : "-") + "</small></td>" +
+              "<td><span class='badge bg-info text-dark'>" + escapeHtml(d.anio || "-") + "</span></td>" +
+              "<td><small class='text-secondary'>" + escapeHtml(d.registradoPor || "-") + "</small></td>" +
               "<td>" +
-                "<button class='btn btn-sm btn-warning me-1' onclick=\"editarRegistro('" + doc.id + "')\">Editar</button>" +
-                "<button class='btn btn-sm btn-danger' onclick=\"eliminarRegistro('" + doc.id + "')\">Eliminar</button>" +
+                "<button class='btn btn-sm btn-warning me-1' onclick=\"editarRegistro('" + escapeHtml(doc.id) + "')\">Editar</button>" +
+                "<button class='btn btn-sm btn-danger' onclick=\"eliminarRegistro('" + escapeHtml(doc.id) + "')\">Eliminar</button>" +
               "</td>";
             tabla.appendChild(fila);
           });

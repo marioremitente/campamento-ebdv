@@ -10,6 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="firebase-init.js"></script>
+  <script src="config.js"></script>
 </head>
 <body class="bg-dark text-light p-4">
   <div class="container" style="max-width:700px;">
@@ -35,10 +36,13 @@
   <script src="footer.js"></script>
 
   <script>
-    // NO requiere autenticacion — acceso publico
+    // Requiere autenticacion — el acceso publico queda deshabilitado por seguridad
     var todosLosDatos = [];
 
-    db.collection("ninos").get().then(function(snapshot) {
+    auth.onAuthStateChanged(function(user) {
+      if (!user) { window.location.href = "login.html"; return; }
+
+      db.collection("ninos").get().then(function(snapshot) {
       document.getElementById("cargando").style.display = "none";
 
       if (snapshot.empty) {
@@ -76,6 +80,7 @@
     }).catch(function(err) {
       console.error(err);
       document.getElementById("cargando").textContent = "Error al cargar estadisticas.";
+    });
     });
 
     function mostrarEstadisticas(anioFiltro) {

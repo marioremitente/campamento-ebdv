@@ -10,6 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="firebase-init.js"></script>
+  <script src="config.js"></script>
 </head>
 <body class="bg-dark text-light p-4">
 
@@ -93,7 +94,6 @@
   <script src="footer.js"></script>
 
   <script>
-    const ADMIN_EMAIL = "remitente2008@gmail.com";
     const anio = new Date().getFullYear();
 
     const LIMITE_PRIMERA = 150;
@@ -105,7 +105,7 @@
 
     auth.onAuthStateChanged(async function(user) {
       if (!user) { window.location.href = "login.html"; return; }
-      if (user.email !== ADMIN_EMAIL) {
+      if (!esAdmin(user)) {
         document.getElementById("sinAcceso").style.display = "block";
         return;
       }
